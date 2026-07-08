@@ -145,7 +145,109 @@ export default function App() {
     }
   };
 
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
+  const handleExportHTML = () => {
+    // Generate clean, inline static HTML containing all slides content
+    const cssContent = `
+      :root {
+        --color-navy: #003B70;
+        --color-teal: #00A3A6;
+        --color-white: #FFFFFF;
+        --color-text-dark: #1E293B;
+      }
+      body { margin: 0; font-family: sans-serif; background: #F1F3F5; }
+      .slide {
+        width: 100vw;
+        height: 56.25vw;
+        padding: 3rem;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        page-break-after: always;
+        background: #FCFBF9;
+        color: var(--color-text-dark);
+      }
+      .slide.cover {
+        background: var(--color-navy);
+        color: var(--color-white);
+        align-items: center;
+        text-align: center;
+      }
+      .slide-title { font-size: 2.5rem; margin-top: 0; }
+      .slide.standard .slide-title { border-bottom: 2px solid var(--color-teal); padding-bottom: 0.5rem; }
+      .slide-line { width: 150px; height: 2px; background: var(--color-teal); margin: 1rem auto; }
+      .slide-content { font-size: 1.1rem; line-height: 1.6; margin-top: 1.5rem; }
+      .slide-content ul { margin: 0; padding-left: 1.5rem; }
+      .slide-content li { margin-bottom: 0.5rem; }
+      .table-container {
+        margin: 1.5rem 0;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #FFFFFF;
+      }
+      .table-row {
+        display: flex;
+        border-bottom: 1px solid #E2E8F0;
+        padding: 0.5rem 0;
+      }
+      .table-row.header-row {
+        font-weight: 600;
+        background: #F8F9FA;
+        border-bottom: 2px solid var(--color-teal);
+      }
+      .table-cell {
+        flex: 1;
+        padding: 0.5rem;
+      }
+      @media print {
+        body { background: white; }
+        .slide { border: none; box-shadow: none; }
+      }
+    `;
+
+    const slidesHtml = slides.map(slide => `
+      <div class="slide ${slide.isCover ? 'cover' : 'standard'}">
+        <h2 class="slide-title">${slide.title}</h2>
+        ${slide.isCover ? '<div class="slide-line"></div>' : ''}
+        <div class="slide-content">${slide.contentHtml}</div>
+      </div>
+    `).join('\n');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${slides[0]?.title || 'Apresentação'}</title>
+          <style>${cssContent}</style>
+        </head>
+        <body>
+          ${slidesHtml}
+          <script>
+            console.log("Apresentação estática gerada via SabrinaStyle.");
+          </script>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Apresentacao_SabrinaStyle.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
+    <>
     <div className="container">
       <header className="header">
         <h1>SabrinaStyle Builder</h1>
@@ -275,9 +377,24 @@ export default function App() {
               Próximo
             </button>
             <button className="btn btn-accent" onClick={() => exportToPPTX(slides)}>Baixar PPTX</button>
+            <button className="btn" onClick={handlePrintPDF}>Imprimir/Salvar PDF</button>
+            <button className="btn" onClick={handleExportHTML}>Exportar HTML</button>
           </div>
         </main>
       )}
     </div>
+    <div className="print-container">
+      {slides.map((slide, index) => (
+        <div key={index} className={`slide-page ${slide.isCover ? 'dark' : ''}`}>
+          <h2 className="slide-title">{slide.title}</h2>
+          {slide.isCover && <div className="slide-line"></div>}
+          <div
+            className="slide-content"
+            dangerouslySetInnerHTML={{ __html: slide.contentHtml }}
+          />
+        </div>
+      ))}
+    </div>
+    </>
   );
 }
