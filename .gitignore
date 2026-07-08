@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.wrangler/
+
+# Agent/Local environment metadata
+.agents/
+.gemini/
+.specify/
+.superpowers/
+
+# Local documents and presentations
+*.pptx
+*.pdf
