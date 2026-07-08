@@ -52,7 +52,7 @@ export default function App() {
   };
 
   const parseSlides = (markdown: string): SlideData[] => {
-    const parts = markdown.split(/\r?\n---\r?\n/);
+    const parts = markdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/);
     return parts.map((part, index) => {
       const trimmed = part.trim();
       const lines = trimmed.split(/\r?\n/);

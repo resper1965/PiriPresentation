@@ -65,41 +65,71 @@ export function exportToPPTX(slides: SlideData[], filename = 'Apresentacao.pptx'
         fill: { color: '00A3A6' }
       });
 
-      // Extract bullets from contentHtml dynamically
-      const bullets: { text: string }[] = [];
+      // Extract bullets or tables from contentHtml dynamically
       const parser = new DOMParser();
       const doc = parser.parseFromString(slide.contentHtml, 'text/html');
       
-      doc.querySelectorAll('li').forEach(li => {
-        bullets.push({ text: li.textContent || '' });
-      });
+      const tableRows = doc.querySelectorAll('.table-row');
+      
+      if (tableRows.length > 0) {
+        const tableData: any[][] = [];
+        tableRows.forEach(row => {
+          const rowData: any[] = [];
+          const isHeader = row.classList.contains('header-row');
+          row.querySelectorAll('.table-cell').forEach(cell => {
+            rowData.push({
+              text: cell.textContent || '',
+              options: {
+                bold: isHeader,
+                fill: { color: isHeader ? 'E2E8F0' : 'FFFFFF' },
+                color: isHeader ? '003B70' : '1E293B'
+              }
+            });
+          });
+          if (rowData.length > 0) tableData.push(rowData);
+        });
 
-      if (bullets.length > 0) {
-        pptSlide.addText(bullets, {
+        pptSlide.addTable(tableData, {
           x: 0.8,
           y: 1.5,
           w: 8.4,
-          h: 3.5,
-          fontSize: 16,
-          color: '1E293B',
-          fontFace: 'Arial', // Sans-serif fallback
-          bullet: true
+          fontSize: 13,
+          fontFace: 'Arial',
+          border: { type: 'solid', color: 'CBD5E1', pt: 1 }
         });
       } else {
-        // Regular text paragraph
-        const paragraphs = Array.from(doc.querySelectorAll('p'))
-          .map(p => p.textContent || '')
-          .join('\n\n');
-          
-        pptSlide.addText(paragraphs, {
-          x: 0.8,
-          y: 1.5,
-          w: 8.4,
-          h: 3.5,
-          fontSize: 16,
-          color: '1E293B',
-          fontFace: 'Arial'
+        const bullets: { text: string }[] = [];
+        doc.querySelectorAll('li').forEach(li => {
+          bullets.push({ text: li.textContent || '' });
         });
+
+        if (bullets.length > 0) {
+          pptSlide.addText(bullets, {
+            x: 0.8,
+            y: 1.5,
+            w: 8.4,
+            h: 3.5,
+            fontSize: 16,
+            color: '1E293B',
+            fontFace: 'Arial', // Sans-serif fallback
+            bullet: true
+          });
+        } else {
+          // Regular text paragraph
+          const paragraphs = Array.from(doc.querySelectorAll('p'))
+            .map(p => p.textContent || '')
+            .join('\n\n');
+            
+          pptSlide.addText(paragraphs, {
+            x: 0.8,
+            y: 1.5,
+            w: 8.4,
+            h: 3.5,
+            fontSize: 16,
+            color: '1E293B',
+            fontFace: 'Arial'
+          });
+        }
       }
     }
   });

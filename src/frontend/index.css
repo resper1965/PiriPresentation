@@ -122,6 +122,7 @@ textarea:focus {
 
 .btn-accent {
   background-color: var(--color-teal);
+  color: var(--color-navy);
 }
 
 .btn-accent:hover {
@@ -168,6 +169,8 @@ textarea:focus {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
