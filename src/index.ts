@@ -1,13 +1,36 @@
 import { Hono } from 'hono';
 
 type Bindings = {
-  AI: any;
-  CF_AI_GATEWAY_TOKEN?: string; // Optional custom gateway token
+  AI: {
+    run: (model: string, input: unknown) => Promise<{ response?: string }>;
+  };
+  CF_AI_GATEWAY_TOKEN?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-function safeJsonParse(text: string): any {
+const MAX_TEXT_LENGTH = 20000;
+const MAX_CUSTOM_INSTRUCTIONS_LENGTH = 1000;
+const ALLOWED_SKILLS = new Set(['concision', 'storytelling', 'critical', 'pnl']);
+
+function normalizeText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function validateText(value: unknown): { text: string; error?: string } {
+  const text = normalizeText(value);
+  if (!text) return { text, error: 'Informe um texto para continuar.' };
+  if (text.length > MAX_TEXT_LENGTH) return { text, error: `O texto excede o limite de ${MAX_TEXT_LENGTH} caracteres.` };
+  return { text };
+}
+
+function normalizeSkills(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((skill): skill is string => typeof skill === 'string' && ALLOWED_SKILLS.has(skill))
+    : [];
+}
+
+function safeJsonParse(text: string): { critique?: unknown; improvedText?: unknown } {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start !== -1 && end !== -1 && end > start) {
@@ -22,11 +45,14 @@ function safeJsonParse(text: string): any {
 }
 
 app.post('/api/critique', async (c) => {
-  const body = (await c.req.json().catch(() => ({}))) || {};
-  const { text = '', skills = [], customInstructions = '' } = body;
-  const safeText = typeof text === 'string' ? text : '';
-  const safeSkills = Array.isArray(skills) ? skills : [];
-  const safeInstructions = typeof customInstructions === 'string' ? customInstructions : '';
+  const body = ((await c.req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
+  const { text: safeText, error } = validateText(body.text);
+  if (error) return c.json({ error }, 400);
+  const safeSkills = normalizeSkills(body.skills);
+  const safeInstructions = normalizeText(body.customInstructions);
+  if (safeInstructions.length > MAX_CUSTOM_INSTRUCTIONS_LENGTH) {
+    return c.json({ error: `As instruções adicionais excedem o limite de ${MAX_CUSTOM_INSTRUCTIONS_LENGTH} caracteres.` }, 400);
+  }
   
   // Default prompt building based on selected skills
   let prompt = "Analise criticamente o texto abaixo e forneça críticas construtivas mais uma versão melhorada.\n\n";
@@ -48,10 +74,9 @@ app.post('/api/critique', async (c) => {
   
   prompt += `\nTexto original:\n"""\n${safeText}\n"""\n\nResponda em formato JSON com duas chaves. Importante: Todas as quebras de linha dentro das strings do JSON devem ser escapadas como \\n (barra invertida seguida de n). Não envie quebras de linha reais dentro dos valores das strings. Exemplo de formato:\n{\n  "critique": "Observação 1\\nObservação 2",\n  "improvedText": "Texto aprimorado aqui"\n}`;
 
-  let aiResponse: any = null;
   try {
     // Using Llama 3.1 8B Instruct FP8 on Cloudflare Workers AI with system instruction and token override
-    aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
+    const aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
       messages: [
         {
           role: 'system',
@@ -70,19 +95,16 @@ app.post('/api/critique', async (c) => {
       critique: typeof parsed.critique === 'string' ? parsed.critique : '',
       improvedText: typeof parsed.improvedText === 'string' ? parsed.improvedText : ''
     });
-  } catch (err: any) {
-    // Fallback response if AI binding fails
-    return c.json({
-      critique: "Erro na chamada da IA de produção. Por favor, tente novamente.",
-      improvedText: safeText + "\n\n(Texto aprimorado localmente - versão mock)"
-    });
+  } catch (err: unknown) {
+    console.error('AI critique failed', err);
+    return c.json({ error: 'Erro na chamada da IA de produção. Por favor, tente novamente.' }, 502);
   }
 });
 
 app.post('/api/generate', async (c) => {
-  const body = (await c.req.json().catch(() => ({}))) || {};
-  const { text = '' } = body;
-  const safeText = typeof text === 'string' ? text : '';
+  const body = ((await c.req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
+  const { text: safeText, error } = validateText(body.text);
+  if (error) return c.json({ error }, 400);
   
   const prompt = `Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nTexto original:\n"""\n${safeText}\n"""`;
 
@@ -100,11 +122,10 @@ app.post('/api/generate', async (c) => {
       ],
       max_tokens: 2400
     });
-    return c.json({ slidesMarkdown: aiResponse.response });
-  } catch (err: any) {
-    return c.json({
-      slidesMarkdown: `# Slide 1: Introdução\n\n${safeText.slice(0, 100)}...\n\n---\n\n# Slide 2: Análise\n\n${safeText.slice(100, 300) || "Sem dados adicionais"}`
-    });
+    return c.json({ slidesMarkdown: aiResponse.response || '' });
+  } catch (err: unknown) {
+    console.error('AI slide generation failed', err);
+    return c.json({ error: 'Erro ao gerar slides com IA. Por favor, tente novamente.' }, 502);
   }
 });
 
@@ -113,3 +134,6 @@ app.get('/api/health', (c) => {
 });
 
 export default app;
+
+
+

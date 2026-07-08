@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { callCritique, callGenerateSlides } from './services/aiService.ts';
-import { exportToPPTX } from './services/pptxExporter.ts';
 
 interface SlideData {
   title: string;
@@ -26,6 +25,7 @@ export default function App() {
   const [slideHeader, setSlideHeader] = useState('Marsh McLennan');
   const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
   const [copied, setCopied] = useState(false);
+  const [exportingPptx, setExportingPptx] = useState(false);
 
   const handleCopyText = () => {
     if (improvedText) {
@@ -62,8 +62,54 @@ export default function App() {
     }
   };
 
+  const escapeHtml = (value: string): string => {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  const sanitizeSlideHtml = (html: string): string => {
+    const allowedTags = new Set(['DIV', 'H3', 'P', 'UL', 'LI', 'STRONG', 'EM', 'CODE']);
+    const allowedClasses = new Set([
+      'grid-2-cols',
+      'grid-3-cols',
+      'card',
+      'metric-highlight',
+      'metric-val',
+      'metric-lbl',
+      'callout-box',
+      'table-container',
+      'table-row',
+      'header-row',
+      'table-cell'
+    ]);
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+    const root = doc.body.firstElementChild;
+    if (!root) return '';
+
+    const clean = (element: Element) => {
+      Array.from(element.children).forEach(child => {
+        if (!allowedTags.has(child.tagName)) {
+          child.replaceWith(doc.createTextNode(child.textContent || ''));
+          return;
+        }
+
+        Array.from(child.attributes).forEach(attr => child.removeAttribute(attr.name));
+        const safeClasses = Array.from(child.classList).filter(className => allowedClasses.has(className));
+        if (safeClasses.length > 0) child.setAttribute('class', safeClasses.join(' '));
+        clean(child);
+      });
+    };
+
+    clean(root);
+    return root.innerHTML;
+  };
+
   const parseInlineMarkdown = (txt: string): string => {
-    return txt
+    return escapeHtml(txt)
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/__(.*?)__/g, '<strong>$1</strong>')
@@ -161,7 +207,7 @@ export default function App() {
       if (insideList) contentHtml += '</ul>';
       if (insideTable) contentHtml += '</div>';
 
-      return { title, contentHtml, isCover, isTable };
+      return { title, contentHtml: sanitizeSlideHtml(contentHtml), isCover, isTable };
     }).filter(s => s.contentHtml || s.title);
   };
 
@@ -185,6 +231,20 @@ export default function App() {
 
   const handlePrintPDF = () => {
     window.print();
+  };
+
+  const handleExportPPTX = async () => {
+    setExportingPptx(true);
+    setError('');
+    try {
+      const { exportToPPTX } = await import('./services/pptxExporter.ts');
+      await exportToPPTX(slides, slideHeader, slideFooter);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setExportingPptx(false);
+    }
   };
 
   const handleExportHTML = () => {
@@ -264,15 +324,15 @@ export default function App() {
       <div class="slide ${slide.isCover ? 'cover' : 'standard'}">
         ${!slide.isCover ? `
           <div class="slide-header">
-            <span class="slide-brand">${slideHeader}</span>
+            <span class="slide-brand">${escapeHtml(slideHeader)}</span>
           </div>
         ` : ''}
-        <h2 class="slide-title">${slide.title}</h2>
+        <h2 class="slide-title">${escapeHtml(slide.title)}</h2>
         ${slide.isCover ? '<div class="slide-line"></div>' : ''}
         <div class="slide-content">${slide.contentHtml}</div>
         ${!slide.isCover ? `
           <div class="slide-footer">
-            <span class="slide-confidential">${slideFooter}</span>
+            <span class="slide-confidential">${escapeHtml(slideFooter)}</span>
             <span class="slide-number">${index + 1}</span>
           </div>
         ` : ''}
@@ -548,7 +608,7 @@ export default function App() {
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </button>
-            <button className="btn btn-accent" onClick={() => exportToPPTX(slides, slideHeader, slideFooter)}>Baixar PPTX</button>
+            <button className="btn btn-accent" onClick={handleExportPPTX} disabled={exportingPptx}>{exportingPptx ? 'Exportando...' : 'Baixar PPTX'}</button>
             <button className="btn" onClick={handlePrintPDF}>Imprimir/Salvar PDF</button>
             <button className="btn" onClick={handleExportHTML}>Exportar HTML</button>
           </div>
@@ -581,3 +641,5 @@ export default function App() {
     </>
   );
 }
+
+

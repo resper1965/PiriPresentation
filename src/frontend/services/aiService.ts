@@ -7,6 +7,18 @@ export interface GenerateResponse {
   slidesMarkdown: string;
 }
 
+type ApiErrorResponse = {
+  error?: string;
+};
+
+async function readJsonResponse<T>(res: Response): Promise<T> {
+  const data = (await res.json().catch(() => ({}))) as ApiErrorResponse | T;
+  if (!res.ok) {
+    throw new Error((data as ApiErrorResponse).error || 'Erro na comunicação com a API.');
+  }
+  return data as T;
+}
+
 export async function callCritique(
   text: string,
   skills: string[],
@@ -17,7 +29,7 @@ export async function callCritique(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, skills, customInstructions })
   });
-  return res.json();
+  return readJsonResponse<CritiqueResponse>(res);
 }
 
 export async function callGenerateSlides(text: string): Promise<GenerateResponse> {
@@ -26,5 +38,5 @@ export async function callGenerateSlides(text: string): Promise<GenerateResponse
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text })
   });
-  return res.json();
+  return readJsonResponse<GenerateResponse>(res);
 }
