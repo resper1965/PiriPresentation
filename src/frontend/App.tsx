@@ -62,7 +62,7 @@ export default function App() {
   };
 
   const parseSlides = (markdown: string): SlideData[] => {
-    const parts = markdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/);
+    const parts = markdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/).map(p => p.trim()).filter(Boolean);
     return parts.map((part, index) => {
       const trimmed = part.trim();
       const lines = trimmed.split(/\r?\n/);
@@ -340,6 +340,14 @@ export default function App() {
                       onChange={() => toggleSkill('critical')}
                     />
                     🧠 Análise Crítica
+                  </label>
+                  <label className={`skill-item ${selectedSkills.includes('pnl') ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills.includes('pnl')}
+                      onChange={() => toggleSkill('pnl')}
+                    />
+                    🗣️ PNL
                   </label>
                 </div>
                 <input
