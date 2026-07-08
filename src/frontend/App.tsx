@@ -152,13 +152,16 @@ export default function App() {
   const handleExportHTML = () => {
     // Generate clean, inline static HTML containing all slides content
     const cssContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
       :root {
         --color-navy: #003B70;
         --color-teal: #00A3A6;
         --color-white: #FFFFFF;
         --color-text-dark: #1E293B;
+        --font-heading: 'Playfair Display', serif;
+        --font-body: 'Inter', sans-serif;
       }
-      body { margin: 0; font-family: sans-serif; background: #F1F3F5; }
+      body { margin: 0; font-family: var(--font-body); background: #F1F3F5; }
       .slide {
         width: 100vw;
         height: 56.25vw;
@@ -177,7 +180,7 @@ export default function App() {
         align-items: center;
         text-align: center;
       }
-      .slide-title { font-size: 2.5rem; margin-top: 0; }
+      .slide-title { font-size: 2.5rem; margin-top: 0; font-family: var(--font-heading); }
       .slide.standard .slide-title { border-bottom: 2px solid var(--color-teal); padding-bottom: 0.5rem; }
       .slide-line { width: 150px; height: 2px; background: var(--color-teal); margin: 1rem auto; }
       .slide-content { font-size: 1.1rem; line-height: 1.6; margin-top: 1.5rem; }
@@ -385,7 +388,7 @@ export default function App() {
     </div>
     <div className="print-container">
       {slides.map((slide, index) => (
-        <div key={index} className={`slide-page ${slide.isCover ? 'dark' : ''}`}>
+        <div key={index} className={`slide-page slide-layout ${slide.isCover ? 'cover' : 'standard'}`}>
           <h2 className="slide-title">{slide.title}</h2>
           {slide.isCover && <div className="slide-line"></div>}
           <div

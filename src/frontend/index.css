@@ -168,12 +168,6 @@ textarea:focus {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background-color: var(--color-white) !important;
-    color: var(--color-text-dark) !important;
-  }
-  .slide-page.dark {
-    background-color: var(--color-navy) !important;
-    color: var(--color-white) !important;
   }
 }
 
