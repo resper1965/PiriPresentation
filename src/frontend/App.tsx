@@ -15,6 +15,7 @@ export default function App() {
   const [critique, setCritique] = useState('');
   const [improvedText, setImprovedText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   // Slide show states
   const [slidesMarkdown, setSlidesMarkdown] = useState('');
@@ -30,12 +31,14 @@ export default function App() {
 
   const handleAnalyze = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await callCritique(text, selectedSkills, customInstructions);
       setCritique(res.critique);
       setImprovedText(res.improvedText);
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -48,10 +51,10 @@ export default function App() {
   };
 
   const parseSlides = (markdown: string): SlideData[] => {
-    const parts = markdown.split(/\n---\n/);
-    return parts.map(part => {
+    const parts = markdown.split(/\r?\n---\r?\n/);
+    return parts.map((part, index) => {
       const trimmed = part.trim();
-      const lines = trimmed.split('\n');
+      const lines = trimmed.split(/\r?\n/);
       
       // Find title
       let title = 'Slide';
@@ -61,17 +64,22 @@ export default function App() {
       }
 
       // Detect layout type
-      const isCover = lines.some(l => l.toLowerCase().includes('capa') || l.toLowerCase().includes('reunião')) || title === 'Slide';
+      const isCover = index === 0;
       const isTable = trimmed.includes('|') && trimmed.includes('-|-');
 
       // Simple HTML converter for topics and tables
       let contentHtml = '';
       let insideList = false;
+      let insideTable = false;
 
       lines.forEach(line => {
         if (line.startsWith('# ')) return; // Skip title line
         
         if (line.startsWith('- ') || line.startsWith('* ')) {
+          if (insideTable) {
+            contentHtml += '</div>';
+            insideTable = false;
+          }
           if (!insideList) {
             contentHtml += '<ul>';
             insideList = true;
@@ -82,18 +90,37 @@ export default function App() {
             contentHtml += '</ul>';
             insideList = false;
           }
-          if (line.trim().startsWith('|')) {
-            // Convert simple tables to html
-            const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-            if (cells.length > 0) {
+          const cleanLine = line.trim();
+          if (cleanLine.startsWith('|')) {
+            // Handle table separator line: if cleanLine.replace(/[\s\-|:|]/g, '') === '', skip it
+            if (cleanLine.replace(/[\s\-|:|]/g, '') === '') {
+              return;
+            }
+            // Safely split cells keeping empty cells
+            let cells = line.split('|').map(c => c.trim());
+            if (line.startsWith('|')) cells.shift();
+            if (line.endsWith('|')) cells.pop();
+
+            if (!insideTable) {
+              contentHtml += '<div class="table-container">';
+              insideTable = true;
+              contentHtml += `<div class="table-row header-row">${cells.map(c => `<div class="table-cell">${c}</div>`).join('')}</div>`;
+            } else {
               contentHtml += `<div class="table-row">${cells.map(c => `<div class="table-cell">${c}</div>`).join('')}</div>`;
             }
-          } else if (line.trim() !== '') {
-            contentHtml += `<p>${line}</p>`;
+          } else {
+            if (insideTable) {
+              contentHtml += '</div>';
+              insideTable = false;
+            }
+            if (cleanLine !== '') {
+              contentHtml += `<p>${line}</p>`;
+            }
           }
         }
       });
       if (insideList) contentHtml += '</ul>';
+      if (insideTable) contentHtml += '</div>';
 
       return { title, contentHtml, isCover, isTable };
     }).filter(s => s.contentHtml || s.title);
@@ -101,6 +128,7 @@ export default function App() {
 
   const handleGenerateSlides = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await callGenerateSlides(text);
       setSlidesMarkdown(res.slidesMarkdown);
@@ -110,6 +138,7 @@ export default function App() {
       setViewMode('slides');
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -125,6 +154,13 @@ export default function App() {
           </button>
         )}
       </header>
+      
+      {error && (
+        <div className="error-banner">
+          <span>{error}</span>
+          <button className="error-close-btn" onClick={() => setError('')}>&times;</button>
+        </div>
+      )}
       
       {viewMode === 'edit' ? (
         <main className="workspace">
@@ -168,13 +204,18 @@ export default function App() {
                 onChange={(e) => setCustomInstructions(e.target.value)}
                 style={{ padding: '0.5rem', border: '1px solid #CBD5E1', borderRadius: '4px' }}
               />
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <button className="btn" onClick={handleAnalyze} disabled={loading}>
                   {loading ? 'Analisando...' : 'Analisar Texto'}
                 </button>
                 <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
                   {loading ? 'Gerando...' : 'Gerar Slides'}
                 </button>
+                {slides.length > 0 && (
+                  <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
+                    Visualizar Slides
+                  </button>
+                )}
               </div>
             </div>
           </section>
