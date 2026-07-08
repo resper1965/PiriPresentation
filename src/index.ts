@@ -8,7 +8,8 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.post('/api/critique', async (c) => {
-  const { text, skills, customInstructions } = await c.req.json();
+  const body = await c.req.json().catch(() => ({}));
+  const { text = '', skills = [], customInstructions = '' } = body;
   
   // Default prompt building based on selected skills
   let prompt = "Você é um consultor estratégico sênior. Analise criticamente o texto abaixo e forneça críticas construtivas mais uma versão melhorada.\n\n";
@@ -44,7 +45,8 @@ app.post('/api/critique', async (c) => {
 });
 
 app.post('/api/generate', async (c) => {
-  const { text } = await c.req.json();
+  const body = await c.req.json().catch(() => ({}));
+  const { text = '' } = body;
   
   const prompt = `Você é um designer de apresentações profissional. Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nCada slide deve conter:\n- Um título claro em Markdown\n- Tópicos ou tabelas apropriadas\n- Se houver comparação, formate como tabela ou em cartões separados.\n\nSiga a estrutura original de conteúdo, convertendo tudo em slides de apresentação elegantes.\n\nTexto original:\n"""\n${text}\n"""`;
 
