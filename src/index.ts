@@ -1,6 +1,64 @@
 import { Hono } from 'hono';
 
-const app = new Hono();
+type Bindings = {
+  AI: any;
+  CF_AI_GATEWAY_TOKEN?: string; // Optional custom gateway token
+};
+
+const app = new Hono<{ Bindings: Bindings }>();
+
+app.post('/api/critique', async (c) => {
+  const { text, skills, customInstructions } = await c.req.json();
+  
+  // Default prompt building based on selected skills
+  let prompt = "Você é um consultor estratégico sênior. Analise criticamente o texto abaixo e forneça críticas construtivas mais uma versão melhorada.\n\n";
+  if (skills.includes('concision')) {
+    prompt += "- Torne o texto conciso, direto e profissional.\n";
+  }
+  if (skills.includes('storytelling')) {
+    prompt += "- Use narrativa envolvente e didática para reter a atenção do público.\n";
+  }
+  if (skills.includes('critical')) {
+    prompt += "- Destaque pontos fracos, gaps de dados ou riscos estratégicos.\n";
+  }
+  if (customInstructions) {
+    prompt += `- Siga esta instrução adicional: ${customInstructions}\n`;
+  }
+  
+  prompt += `\nTexto original:\n"""\n${text}\n"""\n\nResponda estritamente em formato JSON com duas chaves:\n{\n  "critique": "lista de observações críticas aqui",\n  "improvedText": "texto completamente aprimorado aqui"\n}`;
+
+  try {
+    // Using Llama-3-8b-instruct or similar available on Cloudflare Workers AI
+    const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+      prompt: prompt,
+      response_format: { type: "json_object" }
+    });
+    return c.json(aiResponse);
+  } catch (err: any) {
+    // Fallback response if AI binding fails (for local testing without AI local bindings)
+    return c.json({
+      critique: "Simulando críticas locais. Ative o binding do Workers AI para chamadas reais.",
+      improvedText: text + "\n\n(Texto aprimorado localmente - versão mock)"
+    });
+  }
+});
+
+app.post('/api/generate', async (c) => {
+  const { text } = await c.req.json();
+  
+  const prompt = `Você é um designer de apresentações profissional. Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nCada slide deve conter:\n- Um título claro em Markdown\n- Tópicos ou tabelas apropriadas\n- Se houver comparação, formate como tabela ou em cartões separados.\n\nSiga a estrutura original de conteúdo, convertendo tudo em slides de apresentação elegantes.\n\nTexto original:\n"""\n${text}\n"""`;
+
+  try {
+    const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+      prompt: prompt
+    });
+    return c.json({ slidesMarkdown: aiResponse.response });
+  } catch (err: any) {
+    return c.json({
+      slidesMarkdown: `# Slide 1: Introdução\n\n${text.slice(0, 100)}...\n\n---\n\n# Slide 2: Análise\n\n${text.slice(100, 300) || "Sem dados adicionais"}`
+    });
+  }
+});
 
 app.get('/api/health', (c) => {
   return c.json({ status: 'ok', time: new Date().toISOString() });
