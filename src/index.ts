@@ -39,6 +39,9 @@ app.post('/api/critique', async (c) => {
   if (safeSkills.includes('critical')) {
     prompt += "- Destaque pontos fracos, gaps de dados ou riscos estratégicos.\n";
   }
+  if (safeSkills.includes('pnl')) {
+    prompt += "- Aplique técnicas de Programação Neuro-Linguística (PNL) de forma sutil e corporativa: estabeleça raport (empatia, alinhamento com a dor do cliente, visão compartilhada), utilize enquadramentos (framing) focados em soluções e oportunidades, e adote uma linguagem persuasiva profissional. IMPORTANTE: Evite metáforas exageradas, linguagem poética, cenários sentimentais ou clichês de autoajuda. O tom deve permanecer estritamente executivo e corporativo.\n";
+  }
   if (safeInstructions) {
     prompt += `- Siga esta instrução adicional: ${safeInstructions}\n`;
   }
@@ -81,14 +84,14 @@ app.post('/api/generate', async (c) => {
   const { text = '' } = body;
   const safeText = typeof text === 'string' ? text : '';
   
-  const prompt = `Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nCada slide deve conter:\n- Um título claro em Markdown\n- Tópicos ou tabelas apropriadas\n- Se houver comparação, formate como tabela ou em cartões separados.\n\nSiga a estrutura original de conteúdo, convertendo tudo em slides de apresentação elegantes.\n\nTexto original:\n"""\n${safeText}\n"""`;
+  const prompt = `Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nTexto original:\n"""\n${safeText}\n"""`;
 
   try {
     const aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
       messages: [
         {
           role: 'system',
-          content: 'Você é um designer de apresentações profissional. Converta o texto fornecido pelo usuário em slides separados estritamente por "---" (horizontal rules). Cada slide deve ter um título em Markdown e tópicos ou tabelas.'
+          content: 'Você é um designer de apresentações sênior e consultor estratégico (estilo McKinsey/BCG). Sua missão é transformar o texto do usuário em slides executivos de alta fidelidade separados estritamente por "---".\n\nRegras de estruturação:\n1. O Slide 1 DEVE ser a Capa. Deve conter apenas um título principal em Markdown (# Título) e um subtítulo ou autor (## Subtítulo). Não coloque tópicos ou tabelas na Capa.\n2. Todos os outros slides devem começar com um título claro (# Título do Slide).\n3. Varie o formato das informações:\n   - Se houver comparação, benchmarks ou dados quantitativos, você DEVE criar uma Tabela Markdown formatada (ex: | Categoria | SHEIN | Mercado |).\n   - Use tópicos claros destacando termos-chave em negrito (ex: - **Foco Estratégico**: Descrição).\n   - Limite cada slide a no máximo 4 tópicos para manter a legibilidade.\n4. NÃO escreva introduções, explicações ou notas fora dos slides. Sua resposta deve conter estritamente o markdown dos slides separados por "---".'
         },
         {
           role: 'user',
