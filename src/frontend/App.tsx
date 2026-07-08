@@ -24,6 +24,16 @@ export default function App() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'edit' | 'slides'>('edit');
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyText = () => {
+    if (improvedText) {
+      navigator.clipboard.writeText(improvedText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev =>
       prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
@@ -255,10 +265,24 @@ export default function App() {
     <>
     <div className="container">
       <header className="header">
-        <h1>SabrinaStyle Builder</h1>
+        <div className="header-branding">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3h18v12H3z" />
+            <path d="M12 15v5" />
+            <path d="M9 20h6" />
+            <path d="m9 8 3-3 3 3" />
+            <path d="M12 5v6" />
+          </svg>
+          <h1>SabrinaStyle Builder</h1>
+          <span className="header-badge">Workers AI Active</span>
+        </div>
         {viewMode === 'slides' && (
           <button className="btn btn-accent" onClick={() => setViewMode('edit')}>
-            ← Voltar para Edição
+            <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Voltar para Edição
           </button>
         )}
       </header>
@@ -273,79 +297,129 @@ export default function App() {
       {viewMode === 'edit' ? (
         <main className="workspace">
           <section className="panel panel-left">
-            <textarea
-              placeholder="Digite seu rascunho de apresentação..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-            <div className="controls">
-              <div className="skills-list">
-                <label className="skill-item">
-                  <input
-                    type="checkbox"
-                    checked={selectedSkills.includes('concision')}
-                    onChange={() => toggleSkill('concision')}
-                  />
-                  Concisão
-                </label>
-                <label className="skill-item">
-                  <input
-                    type="checkbox"
-                    checked={selectedSkills.includes('storytelling')}
-                    onChange={() => toggleSkill('storytelling')}
-                  />
-                  Storytelling
-                </label>
-                <label className="skill-item">
-                  <input
-                    type="checkbox"
-                    checked={selectedSkills.includes('critical')}
-                    onChange={() => toggleSkill('critical')}
-                  />
-                  Análise Crítica
-                </label>
+            <h2 className="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              Roteiro & Conteúdo
+            </h2>
+            <div className="editor-container">
+              <div className="textarea-wrapper">
+                <textarea
+                  placeholder="Digite o rascunho ou a história de sua apresentação aqui..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+                <div className="textarea-footer">
+                  {text.length} caracteres
+                </div>
               </div>
-              <input
-                type="text"
-                placeholder="Instruções personalizadas adicionais..."
-                value={customInstructions}
-                onChange={(e) => setCustomInstructions(e.target.value)}
-                style={{ padding: '0.5rem', border: '1px solid #CBD5E1', borderRadius: '4px' }}
-              />
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <button className="btn" onClick={handleAnalyze} disabled={loading}>
-                  {loading ? 'Analisando...' : 'Analisar Texto'}
-                </button>
-                <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
-                  {loading ? 'Gerando...' : 'Gerar Slides'}
-                </button>
-                {slides.length > 0 && (
-                  <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
-                    Visualizar Slides
+              <div className="controls">
+                <div className="skills-list">
+                  <label className={`skill-item ${selectedSkills.includes('concision') ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills.includes('concision')}
+                      onChange={() => toggleSkill('concision')}
+                    />
+                    ⚡ Concisão
+                  </label>
+                  <label className={`skill-item ${selectedSkills.includes('storytelling') ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills.includes('storytelling')}
+                      onChange={() => toggleSkill('storytelling')}
+                    />
+                    📖 Storytelling
+                  </label>
+                  <label className={`skill-item ${selectedSkills.includes('critical') ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills.includes('critical')}
+                      onChange={() => toggleSkill('critical')}
+                    />
+                    🧠 Análise Crítica
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  className="custom-inst-input"
+                  placeholder="Instruções personalizadas adicionais (ex: 'Foco em tom corporativo')..."
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                />
+                <div className="action-buttons-group">
+                  <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
+                    {loading ? 'Analisando...' : 'Analisar Texto'}
                   </button>
-                )}
+                  <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
+                    {loading ? 'Gerando...' : 'Gerar Slides'}
+                  </button>
+                  {slides.length > 0 && (
+                    <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
+                      Visualizar Slides
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </section>
 
           <section className="panel panel-right">
-            {critique && (
-              <div className="critique-card">
-                <h3>Observações Críticas</h3>
-                <p style={{ whiteSpace: 'pre-wrap' }}>{critique}</p>
+            {!critique && !improvedText ? (
+              <div className="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m19 11-8 8" />
+                  <path d="m15 15-3 3" />
+                  <path d="m18 10 3-3" />
+                  <path d="m2 2 11 11" />
+                  <path d="M22 2v4h-4" />
+                  <path d="M2 22h4v-4" />
+                  <path d="M20 20h.01" />
+                  <path d="M4 4h.01" />
+                </svg>
+                <h3>Aprimoramento por IA</h3>
+                <p>Escreva o texto do seu roteiro ao lado e clique em "Analisar Texto" ou "Gerar Slides" para ver a mágica acontecer.</p>
               </div>
-            )}
-            {improvedText && (
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <h3>Texto Aprimorado</h3>
-                <textarea readOnly value={improvedText} style={{ backgroundColor: '#F8FAFC' }} />
-                <button
-                  className="btn btn-accent"
-                  onClick={handleApplyImprovements}
-                  style={{ marginTop: '1rem' }}
-                >
-                  Aplicar Melhorias
-                </button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {critique && (
+                  <div className="critique-card">
+                    <h3>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                        <path d="M9 18h6" />
+                        <path d="M10 22h4" />
+                      </svg>
+                      Observações Críticas
+                    </h3>
+                    <p style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: '0.95rem', lineHeight: '1.6' }}>{critique}</p>
+                  </div>
+                )}
+                {improvedText && (
+                  <div className="improved-card">
+                    <div className="card-header-actions">
+                      <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m12 3-1.912 5.886L4.202 9l5.886 1.912L12 16.8l1.912-5.886 5.886-1.912-5.886-1.912z" />
+                        </svg>
+                        Texto Aprimorado
+                      </h3>
+                      <button className={`btn-copy ${copied ? 'copied' : ''}`} onClick={handleCopyText}>
+                        {copied ? 'Copiado!' : 'Copiar'}
+                      </button>
+                    </div>
+                    <textarea readOnly value={improvedText} style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '1rem', borderRadius: '8px' }} />
+                    <button
+                      className="btn btn-accent"
+                      onClick={handleApplyImprovements}
+                      style={{ marginTop: '1.25rem' }}
+                    >
+                      Aplicar Melhorias ao Roteiro
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -367,19 +441,25 @@ export default function App() {
           
           <div className="slideshow-nav">
             <button
-              className="btn"
+              className="btn-circle"
               onClick={() => setCurrentSlideIndex(p => Math.max(0, p - 1))}
               disabled={currentSlideIndex === 0}
+              title="Anterior"
             >
-              Anterior
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
             </button>
-            <span>Slide {currentSlideIndex + 1} de {slides.length}</span>
+            <span>{currentSlideIndex + 1} / {slides.length}</span>
             <button
-              className="btn"
+              className="btn-circle"
               onClick={() => setCurrentSlideIndex(p => Math.min(slides.length - 1, p + 1))}
               disabled={currentSlideIndex === slides.length - 1}
+              title="Próximo"
             >
-              Próximo
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
             </button>
             <button className="btn btn-accent" onClick={() => exportToPPTX(slides)}>Baixar PPTX</button>
             <button className="btn" onClick={handlePrintPDF}>Imprimir/Salvar PDF</button>
