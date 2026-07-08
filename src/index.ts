@@ -8,10 +8,11 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.post('/api/critique', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
+  const body = (await c.req.json().catch(() => ({}))) || {};
   const { text = '', skills = [], customInstructions = '' } = body;
   const safeText = typeof text === 'string' ? text : '';
   const safeSkills = Array.isArray(skills) ? skills : [];
+  const safeInstructions = typeof customInstructions === 'string' ? customInstructions : '';
   
   // Default prompt building based on selected skills
   let prompt = "Você é um consultor estratégico sênior. Analise criticamente o texto abaixo e forneça críticas construtivas mais uma versão melhorada.\n\n";
@@ -24,8 +25,8 @@ app.post('/api/critique', async (c) => {
   if (safeSkills.includes('critical')) {
     prompt += "- Destaque pontos fracos, gaps de dados ou riscos estratégicos.\n";
   }
-  if (customInstructions) {
-    prompt += `- Siga esta instrução adicional: ${customInstructions}\n`;
+  if (safeInstructions) {
+    prompt += `- Siga esta instrução adicional: ${safeInstructions}\n`;
   }
   
   prompt += `\nTexto original:\n"""\n${safeText}\n"""\n\nResponda estritamente em formato JSON com duas chaves:\n{\n  "critique": "lista de observações críticas aqui",\n  "improvedText": "texto completamente aprimorado aqui"\n}`;
@@ -36,7 +37,12 @@ app.post('/api/critique', async (c) => {
       prompt: prompt,
       response_format: { type: "json_object" }
     });
-    return c.json(aiResponse);
+    // Parse the inner JSON string from response
+    const parsed = JSON.parse(aiResponse.response || '{}');
+    return c.json({
+      critique: typeof parsed.critique === 'string' ? parsed.critique : '',
+      improvedText: typeof parsed.improvedText === 'string' ? parsed.improvedText : ''
+    });
   } catch (err: any) {
     // Fallback response if AI binding fails (for local testing without AI local bindings)
     return c.json({
@@ -47,7 +53,7 @@ app.post('/api/critique', async (c) => {
 });
 
 app.post('/api/generate', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
+  const body = (await c.req.json().catch(() => ({}))) || {};
   const { text = '' } = body;
   const safeText = typeof text === 'string' ? text : '';
   
