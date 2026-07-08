@@ -61,8 +61,30 @@ export default function App() {
     }
   };
 
+  const parseInlineMarkdown = (txt: string): string => {
+    return txt
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>');
+  };
+
   const parseSlides = (markdown: string): SlideData[] => {
-    const parts = markdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/).map(p => p.trim()).filter(Boolean);
+    // Normalize double dashes "--" on their own line to standard "---"
+    let normalizedMarkdown = markdown.replace(/(?:^|\r?\n)[ \t]*--[ \t]*(?:\r?\n|$)/g, '\n---\n');
+    
+    // If there is no standard "---" separator, check for "Slide [number]" or "Slide:" patterns
+    if (!normalizedMarkdown.includes('---')) {
+      // Replace "Slide 1:", "Slide 1 -", "# Slide 1" etc. with "\n---\n# "
+      normalizedMarkdown = normalizedMarkdown.replace(/(?:^|\r?\n)(?:#\s*)?Slide\s*\d+\s*[:\-]*\s*/gi, '\n---\n# ');
+      // Handle "Slide:" without number
+      if (!normalizedMarkdown.includes('---')) {
+        normalizedMarkdown = normalizedMarkdown.replace(/(?:^|\r?\n)(?:#\s*)?Slide\s*[:\-]\s*/gi, '\n---\n# ');
+      }
+    }
+
+    const parts = normalizedMarkdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/).map(p => p.trim()).filter(Boolean);
     return parts.map((part, index) => {
       const trimmed = part.trim();
       const lines = trimmed.split(/\r?\n/);
@@ -71,7 +93,8 @@ export default function App() {
       let title = 'Slide';
       const titleLine = lines.find(l => l.startsWith('# '));
       if (titleLine) {
-        title = titleLine.replace('# ', '').trim();
+        // Strip bold/italic symbols from title string for plain representation
+        title = titleLine.replace('# ', '').replace(/\*\*|\*|__/g, '').trim();
       }
 
       // Detect layout type
@@ -95,7 +118,7 @@ export default function App() {
             contentHtml += '<ul>';
             insideList = true;
           }
-          contentHtml += `<li>${line.slice(2)}</li>`;
+          contentHtml += `<li>${parseInlineMarkdown(line.slice(2))}</li>`;
         } else {
           if (insideList) {
             contentHtml += '</ul>';
@@ -115,9 +138,9 @@ export default function App() {
             if (!insideTable) {
               contentHtml += '<div class="table-container">';
               insideTable = true;
-              contentHtml += `<div class="table-row header-row">${cells.map(c => `<div class="table-cell">${c}</div>`).join('')}</div>`;
+              contentHtml += `<div class="table-row header-row">${cells.map(c => `<div class="table-cell">${parseInlineMarkdown(c)}</div>`).join('')}</div>`;
             } else {
-              contentHtml += `<div class="table-row">${cells.map(c => `<div class="table-cell">${c}</div>`).join('')}</div>`;
+              contentHtml += `<div class="table-row">${cells.map(c => `<div class="table-cell">${parseInlineMarkdown(c)}</div>`).join('')}</div>`;
             }
           } else {
             if (insideTable) {
@@ -125,7 +148,7 @@ export default function App() {
               insideTable = false;
             }
             if (cleanLine !== '') {
-              contentHtml += `<p>${line}</p>`;
+              contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
             }
           }
         }
