@@ -39,7 +39,7 @@ app.post('/api/critique', async (c) => {
     });
     // Parse the inner JSON string from response, sanitizing markdown code blocks
     let rawResponse = aiResponse.response || '{}';
-    rawResponse = rawResponse.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+    rawResponse = rawResponse.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
     const parsed = JSON.parse(rawResponse);
     return c.json({
       critique: typeof parsed.critique === 'string' ? parsed.critique : '',

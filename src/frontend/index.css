@@ -127,6 +127,7 @@ textarea:focus {
 
 .btn-accent:hover {
   background-color: #008183;
+  color: var(--color-white);
 }
 
 .critique-card {

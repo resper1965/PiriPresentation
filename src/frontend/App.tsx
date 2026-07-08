@@ -173,6 +173,8 @@ export default function App() {
         page-break-after: always;
         background: #FCFBF9;
         color: var(--color-text-dark);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .slide.cover {
         background: var(--color-navy);
