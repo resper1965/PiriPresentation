@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { callCritique, callGenerateSlides } from './services/aiService.ts';
+import { exportToPPTX } from './services/pptxExporter.ts';
 
 interface SlideData {
   title: string;
@@ -273,6 +274,7 @@ export default function App() {
             >
               Próximo
             </button>
+            <button className="btn btn-accent" onClick={() => exportToPPTX(slides)}>Baixar PPTX</button>
           </div>
         </main>
       )}
