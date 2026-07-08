@@ -1,0 +1,118 @@
+=== PAGE 1 ===
+Marsh McLennan
+SHEIN
+Strategic Health Review & RFP 
+Plan
+JULY 2026 | PREPARED BY MARSH ADVISORY
+
+=== PAGE 2 ===
+Marsh 
+McLennan
+Confidential - SHEIN Strategic Review 
+2026
+1
+HEALTH PLAN DIAGNOSIS
+BRADESCO SAÚDE STATUS QUO
+LOSS RATIO (12M)
+83.5%
+Break-even: 70%
+AVG. LIVES
+593
+Avg. Age: 30 Years
+EST. READJUSTMENT
+20.6%
+Technical Estimate
+INP ATIENT COSTS
+56.7%
+of total claims
+Provider Concentration Utilization Profile
+Frequencies and average costs are consistently above Marsh benchmark for Medical Visits, ER, Hospitalizations, 
+and Therapies.
+High Users: Excluded top highuser (BRL 520k) from recent analysis to normalize trend.
+•São Luiz (Itaim/Guarulhos): 32% of total claims.
+•Reimbursement: 8.7% of total claims.
+•Reimb. Therapies: 87% of all reimbursements.
+
+=== PAGE 3 ===
+Marsh 
+McLennan
+Items General 
+Market Tech Segment SHEIN Comments / Strategic Recommendations
+Financial Model 78% Fully 
+Insured
+83% Fully 
+Insured Fully Insured Aligned Aligned. However, the high loss ratio (83.5%) suggests a 20.6% hike. Consider self-insurance feasibility if growth continues.
+Fixed Contribution 63% Apply 65% Apply Dependents Only 
+Aligned Aligned. Fixed values for dependents (NQC2: R$268 | CP8X: R$535). Market trend favors employer-paid holder plan.
+Copay Strategy 67% Apply 71% Apply NQC2 Only Gap Gap: R$150 ER cap encourages high use. Opportunity to remove cap and apply copay to Executive plan (CP8X).
+Job Eligibility 48% Defined 55% Defined Job-Based 
+Opportunity Senior Managers in Intermediate II (Market uses Exec I). Opportunity for a mid-level plan for Ops/Admin to optimize costs.
+Remission Clause 66% Apply 79% Apply Not Applied Below Opportunity to include 3-6 months remission (market standard). Well-regarded social benefit for delicate times.
+Confidential - SHEIN Strategic Review 
+2026
+2
+OPPORTUNITIES SUMMARY
+HEALTH BENCHMARKING ANALYSIS
+
+
+=== PAGE 4 ===
+Marsh 
+McLennan
+Confidential - SHEIN Strategic Review 
+2026
+3
+MARKET STUDY ROADMAP
+RFP PROCESS - 2 SCENARIOS (AS IS VS. OPTIMIZED)
+Critical Deadline: Cancellation notice for Bradesco must be sent by Nov 30, 
+2026.
+Contract End: Current policy expires Jan 31, 2027. Anniversary Feb 2027.
+July
+Census & Database Collection
+August
+Marsh Tool Insertion (2 Scenarios)
+September
+Market RFP Launch
+October
+Proposal Analysis
+Nov 1-15
+Decision Window (45 days)
+Nov 30
+CANCELLATION NOTICE
+Jan '27
+Implementation (60 days)
+
+=== PAGE 5 ===
+Marsh 
+McLennan
+Confidential - SHEIN Strategic Review 
+2026
+4
+SUGGESTED STRATEGIC ACTIONS
+MITIGATING THE 20.6% TECHNICAL READJUSTMENT
+Clinical Management Financial Design
+Network Optimization Employee Engagement
+•Oncology: Implementation of specialized detection & support programs.
+•High Users: Monthly monitoring and case-management for chronic/severe cases.
+•Telemedicine: Strong promotion to reduce ER visits and elective costs.
+•ER Cap Removal: Replace the R$150 limit with a standard 20% copay to control waste.
+•Executive Copay: Implement cost-sharing in the CP8X plan to align with market.
+•Plan Tiering: Introduce a "Mid-Tier" plan for Administrative/Ops elegibility.
+•Referred Network: Incentive campaigns to use high-quality accredited hospitals instead 
+of reimbursement.
+•Reimbursement Control: Audit therapies reimbursements (87% of total) to detect 
+potential fraud/waste.
+•Benefits Communication: "Smart Use" webinars and infographics.
+•Certificate Cross-Check: Integrate occupational health and certs to analyze 
+absenteeism drivers.
+
+=== PAGE 6 ===
+Disclaimer & Reservations
+The information in this publication is based on sources we consider reliable, but we do not represent or guarantee its accuracy. Marsh McLennan makes no 
+representations or warranties, express or implied, regarding policy terms or the financial solvency of insurers. 
+ Statements on tax, accounting, or legal matters are general observations based on our experience as risk advisors and should not be taken as legal, tax, or 
+accounting advice. Any such matters should be consulted with your respective professionals. 
+ This document is confidential and may not be reproduced without the express permission of Marsh Inc.
+Marsh | Guy Carpenter | Mercer | Oliver Wyman
+Confidential - SHEIN Strategic Review 
+2026
+5

@@ -6,13 +6,13 @@ interface SlideData {
   isCover: boolean;
 }
 
-export function exportToPPTX(slides: SlideData[], filename = 'Apresentacao.pptx') {
+export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter = '', filename = 'Apresentacao.pptx') {
   const pptx = new pptxgen();
   
   // Configure widescreen 16:9 layout
   pptx.layout = 'LAYOUT_169';
 
-  slides.forEach(slide => {
+  slides.forEach((slide, index) => {
     const pptSlide = pptx.addSlide();
 
     if (slide.isCover) {
@@ -43,6 +43,20 @@ export function exportToPPTX(slides: SlideData[], filename = 'Apresentacao.pptx'
     } else {
       // Standard Slide: Cream background (#FCFBF9)
       pptSlide.background = { fill: 'FCFBF9' };
+
+      // Header text (top right)
+      if (slideHeader) {
+        pptSlide.addText(slideHeader, {
+          x: 0.8,
+          y: 0.2,
+          w: 8.4,
+          h: 0.3,
+          fontSize: 10,
+          color: '94A3B8',
+          fontFace: 'Arial',
+          align: 'right'
+        });
+      }
 
       // Title
       pptSlide.addText(slide.title, {
@@ -131,6 +145,32 @@ export function exportToPPTX(slides: SlideData[], filename = 'Apresentacao.pptx'
           });
         }
       }
+
+      // Footer text (bottom left)
+      if (slideFooter) {
+        pptSlide.addText(slideFooter, {
+          x: 0.8,
+          y: 5.1,
+          w: 6.0,
+          h: 0.3,
+          fontSize: 9,
+          color: '94A3B8',
+          fontFace: 'Arial',
+          align: 'left'
+        });
+      }
+
+      // Slide number (bottom right)
+      pptSlide.addText(String(index + 1), {
+        x: 8.0,
+        y: 5.1,
+        w: 1.2,
+        h: 0.3,
+        fontSize: 9,
+        color: '94A3B8',
+        fontFace: 'Arial',
+        align: 'right'
+      });
     }
   });
 

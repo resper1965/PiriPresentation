@@ -660,3 +660,164 @@ textarea {
   from { transform: translateY(-100%); }
   to { transform: translateY(0); }
 }
+
+/* Premium Presentation Slide Layout Utilities */
+.slide-content .grid-2-cols {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.slide-content .grid-3-cols {
+  display: flex;
+  gap: 1.2rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.slide-content .grid-2-cols > *, 
+.slide-content .grid-3-cols > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.slide-content .card {
+  background: var(--color-white);
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+}
+
+.slide-content .card h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-heading);
+  color: var(--color-navy);
+  font-size: 1.25rem;
+  border-bottom: 1.5px solid var(--color-teal);
+  padding-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.slide-content .card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.slide-content .card li {
+  margin-bottom: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.slide-content .metric-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.25rem;
+  background: var(--color-white);
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.slide-content .metric-highlight .metric-val {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-teal);
+  font-family: var(--font-heading);
+  line-height: 1;
+}
+
+.slide-content .metric-highlight .metric-lbl {
+  font-size: 0.95rem;
+  color: var(--color-text-dark);
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.slide-content .callout-box {
+  background: rgba(0, 163, 166, 0.04);
+  border-left: 4px solid var(--color-teal);
+  padding: 1.1rem;
+  border-radius: 4px;
+  font-style: italic;
+  color: var(--color-text-dark);
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+/* Slide Header and Footer Styles */
+.slide-header {
+  position: absolute;
+  top: 1.25rem;
+  left: 4rem;
+  right: 4rem;
+  display: flex;
+  justify-content: flex-end;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.slide-footer {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 4rem;
+  right: 4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.slide-footer .slide-confidential {
+  font-weight: 500;
+}
+
+.slide-footer .slide-number {
+  font-weight: 600;
+  background: rgba(0, 163, 166, 0.06);
+  color: var(--color-teal);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.slide-layout.standard {
+  padding-top: 3.8rem;
+  padding-bottom: 3.8rem;
+}
+
+/* Branding Inputs Styles */
+.branding-inputs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.branding-inputs .input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.branding-inputs .input-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+

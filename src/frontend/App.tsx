@@ -21,9 +21,10 @@ export default function App() {
   // Slide show states
   const [slidesMarkdown, setSlidesMarkdown] = useState('');
   const [slides, setSlides] = useState<SlideData[]>([]);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'edit' | 'slides'>('edit');
-
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [slideHeader, setSlideHeader] = useState('Marsh McLennan');
+  const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
   const [copied, setCopied] = useState(false);
 
   const handleCopyText = () => {
@@ -148,7 +149,11 @@ export default function App() {
               insideTable = false;
             }
             if (cleanLine !== '') {
-              contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
+              if (cleanLine.startsWith('<')) {
+                contentHtml += line;
+              } else {
+                contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
+              }
             }
           }
         }
@@ -198,7 +203,7 @@ export default function App() {
       .slide {
         width: 100vw;
         height: 56.25vw;
-        padding: 3rem;
+        padding: 3.8rem 4rem;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -206,6 +211,7 @@ export default function App() {
         page-break-after: always;
         background: #FCFBF9;
         color: var(--color-text-dark);
+        position: relative;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -214,45 +220,62 @@ export default function App() {
         color: var(--color-white);
         align-items: center;
         text-align: center;
+        padding: 3rem;
       }
-      .slide-title { font-size: 2.5rem; margin-top: 0; font-family: var(--font-heading); }
+      .slide-title { font-size: 2.1rem; margin-top: 0; font-family: var(--font-heading); color: var(--color-navy); }
+      .slide.cover .slide-title { font-size: 2.6rem; color: var(--color-white); }
       .slide.standard .slide-title { border-bottom: 2px solid var(--color-teal); padding-bottom: 0.5rem; }
-      .slide-line { width: 150px; height: 2px; background: var(--color-teal); margin: 1rem auto; }
-      .slide-content { font-size: 1.1rem; line-height: 1.6; margin-top: 1.5rem; }
+      .slide-line { width: 120px; height: 3px; background: var(--color-teal); margin: 1.25rem auto; border-radius: 2px; }
+      .slide-content { font-size: 1.15rem; line-height: 1.7; margin-top: 1.5rem; }
       .slide-content ul { margin: 0; padding-left: 1.5rem; }
-      .slide-content li { margin-bottom: 0.5rem; }
-      .table-container {
-        margin: 1.5rem 0;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #FFFFFF;
-      }
-      .table-row {
-        display: flex;
-        border-bottom: 1px solid #E2E8F0;
-        padding: 0.5rem 0;
-      }
-      .table-row.header-row {
-        font-weight: 600;
-        background: #F8F9FA;
-        border-bottom: 2px solid var(--color-teal);
-      }
-      .table-cell {
-        flex: 1;
-        padding: 0.5rem;
-      }
+      .slide-content li { margin-bottom: 0.6rem; }
+      
+      /* Layout grids and cards */
+      .grid-2-cols { display: flex; gap: 1.5rem; width: 100%; margin-top: 1rem; }
+      .grid-3-cols { display: flex; gap: 1.2rem; width: 100%; margin-top: 1rem; }
+      .grid-2-cols > *, .grid-3-cols > * { flex: 1; min-width: 0; }
+      .card { background: var(--color-white); border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box; }
+      .card h3 { margin-top: 0; margin-bottom: 0.75rem; font-family: var(--font-heading); color: var(--color-navy); font-size: 1.25rem; border-bottom: 1.5px solid var(--color-teal); padding-bottom: 0.4rem; font-weight: 600; }
+      .card ul { margin: 0; padding-left: 1.25rem; }
+      .card li { margin-bottom: 0.4rem; font-size: 1.05rem; }
+      .metric-highlight { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.25rem; background: var(--color-white); border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box; }
+      .metric-highlight .metric-val { font-size: 3rem; font-weight: 700; color: var(--color-teal); font-family: var(--font-heading); line-height: 1; }
+      .metric-highlight .metric-lbl { font-size: 0.95rem; color: var(--color-text-dark); margin-top: 0.5rem; font-weight: 600; }
+      .callout-box { background: rgba(0, 163, 166, 0.04); border-left: 4px solid var(--color-teal); padding: 1.1rem; border-radius: 4px; font-style: italic; color: var(--color-text-dark); margin-bottom: 1.25rem; font-size: 1.1rem; }
+
+      /* Tables styling */
+      .table-container { margin: 1.5rem 0; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; background: #FFFFFF; }
+      .table-row { display: flex; border-bottom: 1px solid #E2E8F0; padding: 0.5rem 0; }
+      .table-row.header-row { font-weight: 600; background: #F8F9FA; border-bottom: 2px solid var(--color-teal); }
+      .table-cell { flex: 1; padding: 0.5rem; }
+
+      /* Header/Footer styling */
+      .slide-header { position: absolute; top: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: flex-end; font-size: 0.8rem; color: #94A3B8; text-transform: uppercase; font-weight: 600; }
+      .slide-footer { position: absolute; bottom: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #94A3B8; }
+      .slide-footer .slide-number { font-weight: 600; background: rgba(0, 163, 166, 0.06); color: var(--color-teal); padding: 0.2rem 0.5rem; border-radius: 4px; }
+
       @media print {
         body { background: white; }
         .slide { border: none; box-shadow: none; }
       }
     `;
 
-    const slidesHtml = slides.map(slide => `
+    const slidesHtml = slides.map((slide, index) => `
       <div class="slide ${slide.isCover ? 'cover' : 'standard'}">
+        ${!slide.isCover ? `
+          <div class="slide-header">
+            <span class="slide-brand">${slideHeader}</span>
+          </div>
+        ` : ''}
         <h2 class="slide-title">${slide.title}</h2>
         ${slide.isCover ? '<div class="slide-line"></div>' : ''}
         <div class="slide-content">${slide.contentHtml}</div>
+        ${!slide.isCover ? `
+          <div class="slide-footer">
+            <span class="slide-confidential">${slideFooter}</span>
+            <span class="slide-number">${index + 1}</span>
+          </div>
+        ` : ''}
       </div>
     `).join('\n');
 
@@ -380,6 +403,28 @@ export default function App() {
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
                 />
+                <div className="branding-inputs">
+                  <div className="input-group">
+                    <label>Cabeçalho dos Slides:</label>
+                    <input
+                      type="text"
+                      className="custom-inst-input"
+                      value={slideHeader}
+                      onChange={(e) => setSlideHeader(e.target.value)}
+                      placeholder="Empresa (ex: Marsh McLennan)"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Rodapé dos Slides:</label>
+                    <input
+                      type="text"
+                      className="custom-inst-input"
+                      value={slideFooter}
+                      onChange={(e) => setSlideFooter(e.target.value)}
+                      placeholder="Confidencialidade / Autor"
+                    />
+                  </div>
+                </div>
                 <div className="action-buttons-group">
                   <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
                     {loading ? 'Analisando...' : 'Analisar Texto'}
@@ -460,12 +505,23 @@ export default function App() {
           <div className="slide-frame">
             {slides.length > 0 && (
               <div className={`slide-layout ${slides[currentSlideIndex].isCover ? 'cover' : 'standard'}`}>
+                {!slides[currentSlideIndex].isCover && (
+                  <div className="slide-header">
+                    <span className="slide-brand">{slideHeader}</span>
+                  </div>
+                )}
                 <h2 className="slide-title">{slides[currentSlideIndex].title}</h2>
                 {slides[currentSlideIndex].isCover && <div className="slide-line"></div>}
                 <div
                   className="slide-content"
                   dangerouslySetInnerHTML={{ __html: slides[currentSlideIndex].contentHtml }}
                 />
+                {!slides[currentSlideIndex].isCover && (
+                  <div className="slide-footer">
+                    <span className="slide-confidential">{slideFooter}</span>
+                    <span className="slide-number">{currentSlideIndex + 1}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -492,7 +548,7 @@ export default function App() {
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </button>
-            <button className="btn btn-accent" onClick={() => exportToPPTX(slides)}>Baixar PPTX</button>
+            <button className="btn btn-accent" onClick={() => exportToPPTX(slides, slideHeader, slideFooter)}>Baixar PPTX</button>
             <button className="btn" onClick={handlePrintPDF}>Imprimir/Salvar PDF</button>
             <button className="btn" onClick={handleExportHTML}>Exportar HTML</button>
           </div>
@@ -502,12 +558,23 @@ export default function App() {
     <div className="print-container">
       {slides.map((slide, index) => (
         <div key={index} className={`slide-page slide-layout ${slide.isCover ? 'cover' : 'standard'}`}>
+          {!slide.isCover && (
+            <div className="slide-header">
+              <span className="slide-brand">{slideHeader}</span>
+            </div>
+          )}
           <h2 className="slide-title">{slide.title}</h2>
           {slide.isCover && <div className="slide-line"></div>}
           <div
             className="slide-content"
             dangerouslySetInnerHTML={{ __html: slide.contentHtml }}
           />
+          {!slide.isCover && (
+            <div className="slide-footer">
+              <span className="slide-confidential">{slideFooter}</span>
+              <span className="slide-number">{index + 1}</span>
+            </div>
+          )}
         </div>
       ))}
     </div>
