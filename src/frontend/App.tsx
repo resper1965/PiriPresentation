@@ -97,9 +97,9 @@ export default function App() {
               return;
             }
             // Safely split cells keeping empty cells
-            let cells = line.split('|').map(c => c.trim());
-            if (line.startsWith('|')) cells.shift();
-            if (line.endsWith('|')) cells.pop();
+            let cells = cleanLine.split('|').map(c => c.trim());
+            if (cleanLine.startsWith('|')) cells.shift();
+            if (cleanLine.endsWith('|')) cells.pop();
 
             if (!insideTable) {
               contentHtml += '<div class="table-container">';
