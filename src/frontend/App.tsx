@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { callCritique, callGenerateSlides } from './services/aiService.ts';
 
 interface SlideData {
@@ -9,6 +9,10 @@ interface SlideData {
 }
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   const [text, setText] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>(['concision']);
   const [customInstructions, setCustomInstructions] = useState('');
@@ -26,9 +30,17 @@ export default function App() {
   const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
   const [slideAuthor, setSlideAuthor] = useState('Sabrina Barros');
   const [targetSlides, setTargetSlides] = useState(6);
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem('piripres_auth_token') || 'piri2026@!');
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('piripres_auth_token') || '');
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('piripres_auth_token');
+    if (savedToken) {
+      setIsAuthenticated(true);
+      setAuthToken(savedToken);
+    }
+  }, []);
 
   const handleCopyText = () => {
     if (improvedText) {
@@ -63,7 +75,14 @@ export default function App() {
       setImprovedText(res.improvedText);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('Não autorizado') || errMsg.includes('token') || errMsg.includes('401')) {
+        localStorage.removeItem('piripres_auth_token');
+        setIsAuthenticated(false);
+        setLoginError('Sessão expirada ou Token de acesso inválido.');
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -307,7 +326,14 @@ export default function App() {
       setViewMode('slides');
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('Não autorizado') || errMsg.includes('token') || errMsg.includes('401')) {
+        localStorage.removeItem('piripres_auth_token');
+        setIsAuthenticated(false);
+        setLoginError('Sessão expirada ou Token de acesso inválido.');
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -460,10 +486,58 @@ export default function App() {
 
   return (
     <>
-    <div className="container">
-      <header className="header">
-        <div className="header-branding">
-          <div className="piripres-logo">
+    {!isAuthenticated ? (
+      <div className="login-wrapper">
+        <div className="login-card">
+          <div className="login-header">
+            <div className="piripres-logo logo-lg">
+              <span className="logo-letter">P</span>
+              <span className="logo-letter-sub">P</span>
+            </div>
+            <h1 className="login-title">Piri<span className="text-teal">Pres</span></h1>
+            <p className="login-subtitle">PiriOffice</p>
+          </div>
+          
+          <p className="login-description">
+            Criação editorial de apresentações executivas sob o padrão de excelência de consultoria de alto impacto.
+          </p>
+
+          {loginError && <div className="login-error-banner">{loginError}</div>}
+
+          <form className="login-form" onSubmit={(e) => {
+            e.preventDefault();
+            if (!tokenInput.trim()) {
+              setLoginError('Digite o token de acesso.');
+              return;
+            }
+            localStorage.setItem('piripres_auth_token', tokenInput.trim());
+            setAuthToken(tokenInput.trim());
+            setIsAuthenticated(true);
+            setLoginError('');
+          }}>
+            <div className="input-group" style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Token de Acesso:</label>
+              <input
+                type="password"
+                className="custom-inst-input"
+                placeholder="Token de acesso (ex: piri2026@!)"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+            <button type="submit" className="btn btn-accent btn-login" style={{ width: '100%', marginTop: '0.5rem' }}>
+              Entrar no PiriPres
+            </button>
+          </form>
+        </div>
+      </div>
+    ) : (
+      <>
+      <div className="container">
+        <header className="header">
+          <div className="header-branding">
+            <div className="piripres-logo">
             <span className="logo-letter">P</span>
             <span className="logo-letter-sub">P</span>
           </div>
@@ -520,7 +594,7 @@ export default function App() {
                       checked={selectedSkills.includes('concision')}
                       onChange={() => toggleSkill('concision')}
                     />
-                    ⚡ Concisão
+                    Concisão
                   </label>
                   <label className={`skill-item ${selectedSkills.includes('storytelling') ? 'active' : ''}`}>
                     <input
@@ -528,7 +602,7 @@ export default function App() {
                       checked={selectedSkills.includes('storytelling')}
                       onChange={() => toggleSkill('storytelling')}
                     />
-                    📖 Storytelling
+                    Storytelling
                   </label>
                   <label className={`skill-item ${selectedSkills.includes('critical') ? 'active' : ''}`}>
                     <input
@@ -536,7 +610,7 @@ export default function App() {
                       checked={selectedSkills.includes('critical')}
                       onChange={() => toggleSkill('critical')}
                     />
-                    🧠 Análise Crítica
+                    Análise Crítica
                   </label>
                   <label className={`skill-item ${selectedSkills.includes('pnl') ? 'active' : ''}`}>
                     <input
@@ -544,7 +618,7 @@ export default function App() {
                       checked={selectedSkills.includes('pnl')}
                       onChange={() => toggleSkill('pnl')}
                     />
-                    🗣️ PNL
+                    PNL
                   </label>
                 </div>
                 <input
@@ -583,19 +657,6 @@ export default function App() {
                       value={slideAuthor}
                       onChange={(e) => setSlideAuthor(e.target.value)}
                       placeholder="Autor (ex: Sabrina Barros)"
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Token de Acesso:</label>
-                    <input
-                      type="password"
-                      className="custom-inst-input"
-                      value={authToken}
-                      onChange={(e) => {
-                        setAuthToken(e.target.value);
-                        localStorage.setItem('piripres_auth_token', e.target.value);
-                      }}
-                      placeholder="Token de acesso (ex: piri2026@!)"
                     />
                   </div>
                 </div>
@@ -777,6 +838,8 @@ export default function App() {
         </div>
       ))}
     </div>
+    </>
+    )}
     </>
   );
 }

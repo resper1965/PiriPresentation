@@ -15,5 +15,8 @@
   },
   "ai": {
     "binding": "AI"
-  }
+  },
+  "routes": [
+    { "pattern": "piri.sabrinabarros.com/*", "zone_name": "sabrinabarros.com" }
+  ]
 }
