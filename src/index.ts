@@ -79,11 +79,54 @@ async function generateCompletion(
     }
   }
 
-  const aiResponse = await env.AI.run(fallbackModel, {
-    messages: messages,
-    max_tokens: maxTokens
-  });
-  return aiResponse.response || '';
+  let result: unknown = '';
+  try {
+    const aiResponse = await env.AI.run(preferredModel, {
+      messages: messages,
+      max_tokens: maxTokens
+    });
+    console.log("Preferred model response type:", typeof aiResponse, "value:", JSON.stringify(aiResponse));
+    result = aiResponse;
+  } catch (e) {
+    console.error(`Direct env.AI.run failed for preferred model (${preferredModel}):`, e);
+    try {
+      const aiResponse = await env.AI.run(fallbackModel, {
+        messages: messages,
+        max_tokens: maxTokens
+      });
+      console.log("Fallback model response type:", typeof aiResponse, "value:", JSON.stringify(aiResponse));
+      result = aiResponse;
+    } catch (err) {
+      console.error(`Direct env.AI.run failed for fallback model (${fallbackModel}):`, err);
+    }
+  }
+
+  // Defensively extract string content
+  if (typeof result === 'string') {
+    return result;
+  }
+  if (result && typeof result === 'object') {
+    const obj = result as Record<string, unknown>;
+    if (typeof obj.response === 'string') {
+      return obj.response;
+    }
+    if (obj.result && typeof obj.result === 'object') {
+      const innerResult = obj.result as Record<string, unknown>;
+      if (typeof innerResult.response === 'string') {
+        return innerResult.response;
+      }
+    }
+    if (Array.isArray(obj.choices) && obj.choices.length > 0) {
+      const choice = obj.choices[0] as Record<string, unknown>;
+      if (choice.message && typeof choice.message === 'object') {
+        const msg = choice.message as Record<string, unknown>;
+        if (typeof msg.content === 'string') {
+          return msg.content;
+        }
+      }
+    }
+  }
+  return String(result || '');
 }
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -150,7 +193,14 @@ function safeJsonParse(text: string): { critique?: unknown; improvedText?: unkno
       // Fallback
     }
   }
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return {
+      critique: 'Não foi possível estruturar a crítica de forma automatizada.',
+      improvedText: text
+    };
+  }
 }
 
 interface SlideOutlineItem {
@@ -170,7 +220,14 @@ function parseOutline(text: string): SlideOutlineItem[] {
       // Fallback
     }
   }
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [
+      { title: 'Capa da Apresentação', type: 'cover', focus: 'Introdução e título principal da apresentação' },
+      { title: 'Análise Estratégica', type: 'standard', focus: 'Detalhamento dos principais tópicos levantados' }
+    ];
+  }
 }
 
 app.post('/api/critique', async (c) => {
