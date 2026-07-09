@@ -491,10 +491,7 @@ export default function App() {
       <div className="login-wrapper">
         <div className="login-card">
           <div className="login-header">
-            <div className="piripres-logo logo-lg">
-              <span className="logo-letter">P</span>
-              <span className="logo-letter-sub">P</span>
-            </div>
+            <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img logo-lg" />
             <h1 className="login-title">Piri<span className="text-teal">Pres</span></h1>
             <p className="login-subtitle">PiriOffice</p>
           </div>
@@ -538,10 +535,7 @@ export default function App() {
       <div className="container">
         <header className="header">
           <div className="header-branding">
-            <div className="piripres-logo">
-            <span className="logo-letter">P</span>
-            <span className="logo-letter-sub">P</span>
-          </div>
+            <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img" />
           <div className="header-title-group">
             <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
             <span className="header-subtitle">PiriOffice</span>
