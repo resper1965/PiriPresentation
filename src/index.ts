@@ -270,55 +270,7 @@ Instruções importantes:
 ${safeText}
 </user_text>`;
 
-      const systemContent = `Você é um designer de apresentações sênior (estilo McKinsey/BCG). Sua missão é transformar o plano de conteúdo fornecido em um slide executivo de altíssima fidelidade.
-
-Regras do HTML toolkit a serem usadas em slides "standard":
-- Grid de duas colunas:
-  <div class="grid-2-cols">
-    <div class="card">
-      <h3>Título A</h3>
-      - Tópico 1
-      - Tópico 2
-    </div>
-    <div class="card">
-      <h3>Título B</h3>
-      - Tópico 1
-      - Tópico 2
-    </div>
-  </div>
-- Grid de três colunas:
-  <div class="grid-3-cols">
-    <div class="card">...</div>
-    <div class="card">...</div>
-    <div class="card">...</div>
-  </div>
-- Destacar números/métricas gigantes:
-  <div class="metric-highlight">
-    <div class="metric-val">94.2%</div>
-    <div class="metric-lbl">Taxa de Conversão</div>
-  </div>
-- Caixa de recomendação (Callout):
-  <div class="callout-box">Recomendação estratégica importante aqui...</div>
-- Tabelas: Use a sintaxe de tabelas markdown padrão.
-
-Exemplo de saída esperada para um slide standard:
-<slide type="standard">
-# Desempenho Operacional Q2
-<div class="metric-highlight">
-  <div class="metric-val">83.5%</div>
-  <div class="metric-lbl">Sinistralidade Operacional</div>
-</div>
-<div class="grid-2-cols">
-  <div class="card">
-    <h3>Pontos de Destaque</h3>
-    - Redução de custos administrativos
-  </div>
-  <div class="card">
-    <h3>Gargalos</h3>
-    - Aumento na sinistralidade YoY
-  </div>
-</div>
-</slide>`;
+      const systemContent = `Você é um designer de apresentações sênior (estilo McKinsey/BCG). Sua missão é transformar o plano de conteúdo fornecido em um slide executivo de altíssima fidelidade.\n\nRegras de estruturação e ACESSIBILIDADE DE COR:\n- REGRA DE CONTRASTE: Nunca use a cor Accent Teal (#00A3A6) para textos normais, descrições, tabelas ou parágrafos. O Teal possui baixo contraste sobre o fundo Warm Cream e deve ser utilizado exclusivamente para números gigantes em realces de métricas (metric-val) ou linhas horizontais decorativas. Textos normais de parágrafo ou listas devem ser escritos em cores de alto contraste.\n\nRegras do HTML toolkit a serem usadas em slides "standard":\n- Grid de duas colunas:\n  <div class="grid-2-cols">\n    <div class="card">\n      <h3>Título A</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n    <div class="card">\n      <h3>Título B</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n  </div>\n- Grid de três colunas:\n  <div class="grid-3-cols">\n    <div class="card">...</div>\n    <div class="card">...</div>\n    <div class="card">...</div>\n  </div>\n- Destacar números/métricas gigantes:\n  <div class="metric-highlight">\n    <div class="metric-val">94.2%</div>\n    <div class="metric-lbl">Taxa de Conversão</div>\n  </div>\n- Caixa de recomendação (Callout):\n  <div class="callout-box">Recomendação estratégica importante aqui...</div>\n- Tabelas: Use a sintaxe de tabelas markdown padrão.\n\nExemplo de saída esperada para um slide standard:\n<slide type="standard">\n# Desempenho Operacional Q2\n<div class="metric-highlight">\n  <div class="metric-val">83.5%</div>\n  <div class="metric-lbl">Sinistralidade Operacional</div>\n</div>\n<div class="grid-2-cols">\n  <div class="card">\n    <h3>Pontos de Destaque</h3>\n    - Redução de custos administrativos\n  </div>\n  <div class="card">\n    <h3>Gargalos</h3>\n    - Aumento na sinistralidade YoY\n  </div>\n</div>\n</slide>`;
 
       return generateCompletion(
         c.env,
