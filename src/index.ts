@@ -213,7 +213,7 @@ app.post('/api/critique', async (c) => {
   try {
     const content = await generateCompletion(
       c.env,
-      '@cf/meta/llama-3.1-70b-instruct',
+      '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
       '@cf/meta/llama-3.1-8b-instruct-fp8',
       [
         {
@@ -262,7 +262,7 @@ ${safeText}
 
     const planContent = await generateCompletion(
       c.env,
-      '@cf/meta/llama-3.1-70b-instruct',
+      '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
       '@cf/meta/llama-3.1-8b-instruct-fp8',
       [
         {
@@ -304,7 +304,7 @@ ${safeText}
 
       return generateCompletion(
         c.env,
-        '@cf/meta/llama-3.1-70b-instruct',
+        '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         '@cf/meta/llama-3.1-8b-instruct-fp8',
         [
           {

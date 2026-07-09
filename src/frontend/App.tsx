@@ -518,7 +518,7 @@ export default function App() {
               <input
                 type="password"
                 className="custom-inst-input"
-                placeholder="Token de acesso (ex: piri2026@!)"
+                placeholder="Digite o token de acesso..."
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 style={{ width: '100%', boxSizing: 'border-box' }}

@@ -9,8 +9,6 @@
     "enabled": true
   },
   "vars": {
-    "AI_GATEWAY_TOKEN": "cfut_7LhA0J9JrVqxgqlqxhtcRKPrBQWCcHCRH5ziz0lu686a1161",
-    "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/0a6c490dd5fe9051422c15c9e133138e/pirioffice/compat/chat/completions",
     "AUTH_TOKEN": "piri2026@!"
   },
   "ai": {
