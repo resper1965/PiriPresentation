@@ -26,6 +26,7 @@ export default function App() {
   const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
   const [slideAuthor, setSlideAuthor] = useState('Sabrina Barros');
   const [targetSlides, setTargetSlides] = useState(6);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('piripres_auth_token') || 'piri2026@!');
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
 
@@ -571,6 +572,19 @@ export default function App() {
                       value={slideAuthor}
                       onChange={(e) => setSlideAuthor(e.target.value)}
                       placeholder="Autor (ex: Sabrina Barros)"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Token de Acesso:</label>
+                    <input
+                      type="password"
+                      className="custom-inst-input"
+                      value={authToken}
+                      onChange={(e) => {
+                        setAuthToken(e.target.value);
+                        localStorage.setItem('piripres_auth_token', e.target.value);
+                      }}
+                      placeholder="Token de acesso (ex: piri2026@!)"
                     />
                   </div>
                 </div>

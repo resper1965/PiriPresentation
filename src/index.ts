@@ -6,6 +6,7 @@ type Bindings = {
   };
   AI_GATEWAY_TOKEN?: string;
   AI_GATEWAY_URL?: string;
+  AUTH_TOKEN?: string;
 };
 
 async function generateCompletion(
@@ -70,6 +71,22 @@ async function generateCompletion(
 }
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use('/api/*', async (c, next) => {
+  if (c.req.path === '/api/health') {
+    return next();
+  }
+  const expectedToken = c.env.AUTH_TOKEN || 'piri2026@!';
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Não autorizado. Token de acesso ausente ou inválido.' }, 401);
+  }
+  const token = authHeader.substring(7);
+  if (token !== expectedToken) {
+    return c.json({ error: 'Não autorizado. Token de acesso inválido.' }, 401);
+  }
+  await next();
+});
 
 const MAX_TEXT_LENGTH = 20000;
 const MAX_CUSTOM_INSTRUCTIONS_LENGTH = 1000;

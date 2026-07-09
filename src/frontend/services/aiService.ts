@@ -19,6 +19,10 @@ async function readJsonResponse<T>(res: Response): Promise<T> {
   return data as T;
 }
 
+const getAuthToken = (): string => {
+  return localStorage.getItem('piripres_auth_token') || 'piri2026@!';
+};
+
 export async function callCritique(
   text: string,
   skills: string[],
@@ -26,7 +30,10 @@ export async function callCritique(
 ): Promise<CritiqueResponse> {
   const res = await fetch('/api/critique', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
     body: JSON.stringify({ text, skills, customInstructions })
   });
   return readJsonResponse<CritiqueResponse>(res);
@@ -35,7 +42,10 @@ export async function callCritique(
 export async function callGenerateSlides(text: string, targetSlides: number): Promise<GenerateResponse> {
   const res = await fetch('/api/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
     body: JSON.stringify({ text, targetSlides })
   });
   return readJsonResponse<GenerateResponse>(res);
