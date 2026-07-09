@@ -17,6 +17,6 @@
     "binding": "AI"
   },
   "routes": [
-    { "pattern": "piri.sabrinabarros.com/*", "zone_name": "sabrinabarros.com" }
+    { "pattern": "piri.sabrinabarros.com", "custom_domain": true }
   ]
 }
