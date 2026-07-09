@@ -119,44 +119,109 @@ export default function App() {
       .replace(/`(.*?)`/g, '<code>$1</code>');
   };
 
-  const parseSlides = (markdown: string): SlideData[] => {
-    // Normalize double dashes "--" on their own line to standard "---"
+  const parseSlidesLegacy = (markdown: string): SlideData[] => {
     let normalizedMarkdown = markdown.replace(/(?:^|\r?\n)[ \t]*--[ \t]*(?:\r?\n|$)/g, '\n---\n');
-    
-    // If there is no standard "---" separator, check for "Slide [number]" or "Slide:" patterns
     if (!normalizedMarkdown.includes('---')) {
-      // Replace "Slide 1:", "Slide 1 -", "# Slide 1" etc. with "\n---\n# "
       normalizedMarkdown = normalizedMarkdown.replace(/(?:^|\r?\n)(?:#\s*)?Slide\s*\d+\s*[:\-]*\s*/gi, '\n---\n# ');
-      // Handle "Slide:" without number
       if (!normalizedMarkdown.includes('---')) {
         normalizedMarkdown = normalizedMarkdown.replace(/(?:^|\r?\n)(?:#\s*)?Slide\s*[:\-]\s*/gi, '\n---\n# ');
       }
     }
-
     const parts = normalizedMarkdown.split(/\r?\n[ \t]*---[ \t]*\r?\n/).map(p => p.trim()).filter(Boolean);
     return parts.map((part, index) => {
       const trimmed = part.trim();
       const lines = trimmed.split(/\r?\n/);
-      
-      // Find title
       let title = 'Slide';
       const titleLine = lines.find(l => l.startsWith('# '));
       if (titleLine) {
-        // Strip bold/italic symbols from title string for plain representation
+        title = titleLine.replace('# ', '').replace(/\*\*|\*|__/g, '').trim();
+      }
+      const isCover = index === 0;
+      const isTable = trimmed.includes('|') && trimmed.includes('-|-');
+      let contentHtml = '';
+      let insideList = false;
+      let insideTable = false;
+      lines.forEach(line => {
+        if (line.startsWith('# ')) return;
+        if (line.startsWith('- ') || line.startsWith('* ')) {
+          if (insideTable) {
+            contentHtml += '</div>';
+            insideTable = false;
+          }
+          if (!insideList) {
+            contentHtml += '<ul>';
+            insideList = true;
+          }
+          contentHtml += `<li>${parseInlineMarkdown(line.slice(2))}</li>`;
+        } else {
+          if (insideList) {
+            contentHtml += '</ul>';
+            insideList = false;
+          }
+          const cleanLine = line.trim();
+          if (cleanLine.startsWith('|')) {
+            if (cleanLine.replace(/[\s\-|:|]/g, '') === '') return;
+            let cells = cleanLine.split('|').map(c => c.trim());
+            if (cleanLine.startsWith('|')) cells.shift();
+            if (cleanLine.endsWith('|')) cells.pop();
+            if (!insideTable) {
+              contentHtml += '<div class="table-container">';
+              insideTable = true;
+              contentHtml += `<div class="table-row header-row">${cells.map(c => `<div class="table-cell">${parseInlineMarkdown(c)}</div>`).join('')}</div>`;
+            } else {
+              contentHtml += `<div class="table-row">${cells.map(c => `<div class="table-cell">${parseInlineMarkdown(c)}</div>`).join('')}</div>`;
+            }
+          } else {
+            if (insideTable) {
+              contentHtml += '</div>';
+              insideTable = false;
+            }
+            if (cleanLine !== '') {
+              if (cleanLine.startsWith('<')) {
+                contentHtml += line;
+              } else {
+                contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
+              }
+            }
+          }
+        }
+      });
+      if (insideList) contentHtml += '</ul>';
+      if (insideTable) contentHtml += '</div>';
+      return { title, contentHtml: sanitizeSlideHtml(contentHtml), isCover, isTable };
+    }).filter(s => s.contentHtml || s.title);
+  };
+
+  const parseSlides = (markdown: string): SlideData[] => {
+    const hasTags = /<slide/i.test(markdown);
+    if (!hasTags) {
+      return parseSlidesLegacy(markdown);
+    }
+
+    const slideRegex = /<slide\s+type="([^"]+)">([\s\S]*?)<\/slide>/gi;
+    const slidesList: SlideData[] = [];
+    let match;
+
+    while ((match = slideRegex.exec(markdown)) !== null) {
+      const type = match[1].toLowerCase();
+      const content = match[2].trim();
+      const lines = content.split(/\r?\n/);
+
+      let title = 'Slide';
+      const titleLine = lines.find(l => l.startsWith('# '));
+      if (titleLine) {
         title = titleLine.replace('# ', '').replace(/\*\*|\*|__/g, '').trim();
       }
 
-      // Detect layout type
-      const isCover = index === 0;
-      const isTable = trimmed.includes('|') && trimmed.includes('-|-');
+      const isCover = type === 'cover';
+      const isTable = content.includes('|') && content.includes('-|-');
 
-      // Simple HTML converter for topics and tables
       let contentHtml = '';
       let insideList = false;
       let insideTable = false;
 
       lines.forEach(line => {
-        if (line.startsWith('# ')) return; // Skip title line
+        if (line.startsWith('# ')) return;
         
         if (line.startsWith('- ') || line.startsWith('* ')) {
           if (insideTable) {
@@ -175,11 +240,9 @@ export default function App() {
           }
           const cleanLine = line.trim();
           if (cleanLine.startsWith('|')) {
-            // Handle table separator line: if cleanLine.replace(/[\s\-|:|]/g, '') === '', skip it
             if (cleanLine.replace(/[\s\-|:|]/g, '') === '') {
               return;
             }
-            // Safely split cells keeping empty cells
             let cells = cleanLine.split('|').map(c => c.trim());
             if (cleanLine.startsWith('|')) cells.shift();
             if (cleanLine.endsWith('|')) cells.pop();
@@ -209,8 +272,15 @@ export default function App() {
       if (insideList) contentHtml += '</ul>';
       if (insideTable) contentHtml += '</div>';
 
-      return { title, contentHtml: sanitizeSlideHtml(contentHtml), isCover, isTable };
-    }).filter(s => s.contentHtml || s.title);
+      slidesList.push({
+        title,
+        contentHtml: sanitizeSlideHtml(contentHtml),
+        isCover,
+        isTable
+      });
+    }
+
+    return slidesList;
   };
 
   const handleGenerateSlides = async () => {
