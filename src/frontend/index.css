@@ -51,14 +51,14 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--color-navy), #002547);
+  background: linear-gradient(135deg, #011420 0%, #002035 50%, #00304f 100%);
   color: var(--color-white);
-  padding: 0.85rem 2rem;
+  padding: 0.75rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid var(--color-teal);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 10;
 }
 
@@ -69,8 +69,8 @@ body {
 }
 
 .piripres-logo-img {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
 }
 
