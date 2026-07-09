@@ -7,6 +7,7 @@ type Bindings = {
   AI_GATEWAY_TOKEN?: string;
   AI_GATEWAY_URL?: string;
   AUTH_TOKEN?: string;
+  ANTHROPIC_API_KEY?: string;
 };
 
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 12000): Promise<Response> {
@@ -32,6 +33,49 @@ async function generateCompletion(
   messages: any[],
   maxTokens: number
 ): Promise<string> {
+  // If Anthropic API Key is defined, route to Claude 3.5 Sonnet via Cloudflare AI Gateway!
+  if (env.ANTHROPIC_API_KEY && env.AI_GATEWAY_URL) {
+    const gatewayMatch = env.AI_GATEWAY_URL.match(/\/v1\/([^/]+)\/([^/]+)/);
+    if (gatewayMatch) {
+      const accountId = gatewayMatch[1];
+      const gatewayId = gatewayMatch[2];
+      const url = `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/anthropic/v1/messages`;
+      
+      const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+      const userMsgs = messages.filter(m => m.role !== 'system').map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      }));
+
+      try {
+        const response = await fetchWithTimeout(url, {
+          method: 'POST',
+          headers: {
+            'x-api-key': env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            system: systemMsg,
+            messages: userMsgs,
+            max_tokens: maxTokens
+          })
+        }, 15000);
+        
+        if (response.ok) {
+          const data: any = await response.json();
+          const content = data?.content?.[0]?.text;
+          if (content) return content;
+        } else {
+          console.warn(`Claude routing via AI Gateway returned status ${response.status}: ${await response.text()}`);
+        }
+      } catch (e) {
+        console.error('Claude routing via AI Gateway failed:', e);
+      }
+    }
+  }
+
   if (env.AI_GATEWAY_URL && env.AI_GATEWAY_TOKEN) {
     try {
       const response = await fetchWithTimeout(env.AI_GATEWAY_URL, {
