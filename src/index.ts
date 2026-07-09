@@ -413,10 +413,11 @@ ${slide.focus}
 
 Instruções importantes:
 - Baseie-se estritamente no rascunho de conteúdo fornecido. Não remova informações estratégicas e não crie tópicos adicionais que não estejam no rascunho.
+- IMPORTANTE: Se o rascunho contiver no final seções gerais de texto corrido (como "Texto Consolidado do Diagnóstico", "Texto Consolidado", ou explicações finais da apresentação), ignore-as completamente e não as incorpore ao slide. Foque exclusivamente nos tópicos específicos relativos a este slide.
 - Retorne o slide encapsulado na tag XML: <slide type="${slide.type}"> ... </slide>.
 - Se type for "cover", crie a capa da apresentação contendo apenas o título principal em Markdown (# Título) e o subtítulo (## Subtítulo). Não use tabelas ou colunas na capa.
 - Se type for "standard", comece com o título do slide (# Título do Slide) e use pelo menos uma estrutura visual do nosso HTML toolkit (grids de colunas, caixas de callout, tabelas markdown ou métricas de destaque) para organizar as informações de forma executiva.
-- Certifique-se de respeitar a REGRA DE CONTRASTE: nunca use a cor Accent Teal (#00A3A6) para textos normais ou parágrafos, apenas para números gigantes de métricas (metric-val) ou elementos decorativos.
+- Certifique-se de respeitar a REGRA DE CONTRASTE: nunca use a cor Accent Teal (#00A3A6) para textos normais ou parágrafos, apenas para números gigantes de métricas (metric-val) ou elements decorativos.
 - Não escreva nenhuma introdução, notas explicativas ou tags fora de <slide> e </slide>.`;
       } else {
         // Planner mode: Generate content from general user text and planned slide focus
