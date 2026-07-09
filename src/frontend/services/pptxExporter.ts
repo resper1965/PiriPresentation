@@ -6,7 +6,7 @@ interface SlideData {
   isCover: boolean;
 }
 
-export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter = '', filename = 'Apresentacao.pptx') {
+export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter = '', slideAuthor = '', filename = 'Apresentacao.pptx') {
   const pptx = new pptxgen();
   
   // Configure widescreen 16:9 layout
@@ -22,7 +22,7 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
       // Title
       pptSlide.addText(slide.title, {
         x: 1.0,
-        y: 2.0,
+        y: 1.8,
         w: 8.0,
         h: 1.5,
         fontSize: 40,
@@ -35,11 +35,25 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
       // Decorative line
       pptSlide.addShape(pptx.ShapeType.rect, {
         x: 4.0,
-        y: 3.5,
+        y: 3.3,
         w: 2.0,
         h: 0.05,
         fill: { color: '00A3A6' }
       });
+
+      // Author Info
+      if (slideAuthor) {
+        pptSlide.addText(`Elaborado por: ${slideAuthor}`, {
+          x: 1.0,
+          y: 4.0,
+          w: 8.0,
+          h: 0.4,
+          fontSize: 14,
+          color: 'A0AEC0',
+          fontFace: 'Arial',
+          align: 'center'
+        });
+      }
     } else {
       // Standard Slide: Cream background (#FCFBF9)
       pptSlide.background = { fill: 'FCFBF9' };

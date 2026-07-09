@@ -24,6 +24,7 @@ export default function App() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [slideHeader, setSlideHeader] = useState('Marsh McLennan');
   const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
+  const [slideAuthor, setSlideAuthor] = useState('Sabrina Barros');
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
 
@@ -238,7 +239,7 @@ export default function App() {
     setError('');
     try {
       const { exportToPPTX } = await import('./services/pptxExporter.ts');
-      await exportToPPTX(slides, slideHeader, slideFooter);
+      await exportToPPTX(slides, slideHeader, slideFooter, slideAuthor);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -313,6 +314,7 @@ export default function App() {
       .slide-header { position: absolute; top: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: flex-end; font-size: 0.8rem; color: #94A3B8; text-transform: uppercase; font-weight: 600; }
       .slide-footer { position: absolute; bottom: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #94A3B8; }
       .slide-footer .slide-number { font-weight: 600; background: rgba(0, 163, 166, 0.06); color: var(--color-teal); padding: 0.2rem 0.5rem; border-radius: 4px; }
+      .slide.cover .slide-author { margin-top: 1.5rem; font-size: 1rem; color: rgba(255,255,255,0.7); font-weight: 500; text-align: center; font-family: var(--font-body); letter-spacing: 0.02em; }
 
       @media print {
         body { background: white; }
@@ -335,7 +337,13 @@ export default function App() {
             <span class="slide-confidential">${escapeHtml(slideFooter)}</span>
             <span class="slide-number">${index + 1}</span>
           </div>
-        ` : ''}
+        ` : `
+          ${slideAuthor ? `
+            <div class="slide-author">
+              Elaborado por: ${escapeHtml(slideAuthor)}
+            </div>
+          ` : ''}
+        `}
       </div>
     `).join('\n');
 
@@ -372,16 +380,13 @@ export default function App() {
     <div className="container">
       <header className="header">
         <div className="header-branding">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 3h18v12H3z" />
-            <path d="M12 15v5" />
-            <path d="M9 20h6" />
-            <path d="m9 8 3-3 3 3" />
-            <path d="M12 5v6" />
-          </svg>
+          <div className="piripres-logo">
+            <span className="logo-letter">P</span>
+            <span className="logo-letter-sub">P</span>
+          </div>
           <div className="header-title-group">
-            <h1>PiriPres</h1>
-            <span className="header-subtitle">Parte do PiriOffice</span>
+            <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
+            <span className="header-subtitle">PiriOffice</span>
           </div>
           <span className="header-badge">Workers AI Active</span>
         </div>
@@ -468,7 +473,7 @@ export default function App() {
                 />
                 <div className="branding-inputs">
                   <div className="input-group">
-                    <label>Cabeçalho dos Slides:</label>
+                    <label>Cabeçalho:</label>
                     <input
                       type="text"
                       className="custom-inst-input"
@@ -478,13 +483,23 @@ export default function App() {
                     />
                   </div>
                   <div className="input-group">
-                    <label>Rodapé dos Slides:</label>
+                    <label>Rodapé:</label>
                     <input
                       type="text"
                       className="custom-inst-input"
                       value={slideFooter}
                       onChange={(e) => setSlideFooter(e.target.value)}
-                      placeholder="Confidencialidade / Autor"
+                      placeholder="Confidencialidade"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Autor:</label>
+                    <input
+                      type="text"
+                      className="custom-inst-input"
+                      value={slideAuthor}
+                      onChange={(e) => setSlideAuthor(e.target.value)}
+                      placeholder="Autor (ex: Sabrina Barros)"
                     />
                   </div>
                 </div>
@@ -579,11 +594,17 @@ export default function App() {
                   className="slide-content"
                   dangerouslySetInnerHTML={{ __html: slides[currentSlideIndex].contentHtml }}
                 />
-                {!slides[currentSlideIndex].isCover && (
+                {!slides[currentSlideIndex].isCover ? (
                   <div className="slide-footer">
                     <span className="slide-confidential">{slideFooter}</span>
                     <span className="slide-number">{currentSlideIndex + 1}</span>
                   </div>
+                ) : (
+                  slideAuthor && (
+                    <div className="slide-author">
+                      Elaborado por: {slideAuthor}
+                    </div>
+                  )
                 )}
               </div>
             )}
@@ -632,11 +653,17 @@ export default function App() {
             className="slide-content"
             dangerouslySetInnerHTML={{ __html: slide.contentHtml }}
           />
-          {!slide.isCover && (
+          {!slide.isCover ? (
             <div className="slide-footer">
               <span className="slide-confidential">{slideFooter}</span>
               <span className="slide-number">{index + 1}</span>
             </div>
+          ) : (
+            slideAuthor && (
+              <div className="slide-author">
+                Elaborado por: {slideAuthor}
+              </div>
+            )
           )}
         </div>
       ))}
