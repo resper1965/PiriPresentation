@@ -304,10 +304,38 @@ app.post('/api/generate', async (c) => {
   const targetSlides = typeof body.targetSlides === 'number' ? body.targetSlides : 6;
 
   try {
+    const hasSlideMarkers = /(?:^|\r?\n)Slide\s*\d+\s*[:\-]/i.test(safeText);
     const hasSeparators = safeText.includes('\n---') || safeText.includes('\r\n---');
+    const isPreStructured = hasSlideMarkers || hasSeparators;
     let outline: { title: string; type: 'cover' | 'standard'; focus: string }[] = [];
 
-    if (hasSeparators) {
+    if (hasSlideMarkers) {
+      // Parse using the Slide X: Regex pattern
+      const regex = /(?:^|\r?\n)Slide\s*(\d+)\s*[:\-](.*?)(?=(?:\r?\n)Slide\s*\d+\s*[:\-]|$)/gis;
+      const matches = [...safeText.matchAll(regex)];
+      outline = matches.map((match, index) => {
+        const slideNum = parseInt(match[1], 10);
+        const rawContent = match[2].trim();
+        const lines = rawContent.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        
+        let title = `Slide ${slideNum}`;
+        let focus = rawContent;
+        
+        if (lines.length > 0) {
+          // The first line of rawContent is the title or title header
+          const firstLine = lines[0];
+          title = firstLine.replace(/^#+\s*/, '').replace(/^[*•\-]\s*/, '').trim();
+          // The focus content is the rest of the text
+          focus = lines.slice(1).join('\n');
+        }
+        
+        return {
+          title,
+          type: index === 0 ? 'cover' as const : 'standard' as const,
+          focus: `# ${title}\n${focus}`
+        };
+      });
+    } else if (hasSeparators) {
       // Split the text by slide separator and trim parts
       const fragments = safeText.split(/\r?\n---\r?\n/).map(f => f.trim()).filter(Boolean);
       outline = fragments.map((fragment, index) => {
@@ -373,7 +401,7 @@ ${safeText}
     // 2. Writer Agents: Generate content for each slide in parallel
     const slideTasks = outline.map(async (slide, index) => {
       let slidePrompt = '';
-      if (hasSeparators) {
+      if (isPreStructured) {
         // Designer mode: Transform the user's specific slide draft into a styled slide
         slidePrompt = `Gere o conteúdo final do slide de índice ${index + 1} da apresentação, atuando como um Designer e redator sênior.
 Você deve formatar o rascunho de slide fornecido abaixo em HTML semântico utilizando o nosso toolkit.
