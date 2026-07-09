@@ -535,10 +535,13 @@ export default function App() {
       <div className="container">
         <header className="header">
           <div className="header-branding">
-            <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img" />
-            <div className="header-title-group">
-              <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
-              <span className="header-subtitle">PiriOffice</span>
+            <div className="logo-brand-group">
+              <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img" />
+              <div className="brand-divider"></div>
+              <div className="header-title-group">
+                <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
+                <span className="header-subtitle">PiriOffice</span>
+              </div>
             </div>
             <span className="header-badge">Workers AI Active</span>
           </div>

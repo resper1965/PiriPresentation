@@ -65,13 +65,26 @@ body {
 .header-branding {
   display: flex;
   align-items: center;
-  gap: 0.95rem;
+  gap: 1.15rem;
+}
+
+.logo-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(252, 251, 249, 0.15);
 }
 
 .piripres-logo-img {
-  width: 56px;
-  height: 56px;
+  width: 63px;
+  height: 63px;
   object-fit: contain;
+  mix-blend-mode: screen;
 }
 
 .header-title-group {
