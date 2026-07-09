@@ -174,8 +174,9 @@ export default function App() {
       let insideList = false;
       let insideTable = false;
       lines.forEach(line => {
-        if (line.startsWith('# ')) return;
-        if (line.startsWith('- ') || line.startsWith('* ')) {
+        const cleanLine = line.trim();
+        if (cleanLine.startsWith('# ')) return;
+        if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
           if (insideTable) {
             contentHtml += '</div>';
             insideTable = false;
@@ -184,13 +185,12 @@ export default function App() {
             contentHtml += '<ul>';
             insideList = true;
           }
-          contentHtml += `<li>${parseInlineMarkdown(line.slice(2))}</li>`;
+          contentHtml += `<li>${parseInlineMarkdown(cleanLine.slice(2))}</li>`;
         } else {
           if (insideList) {
             contentHtml += '</ul>';
             insideList = false;
           }
-          const cleanLine = line.trim();
           if (cleanLine.startsWith('|')) {
             if (cleanLine.replace(/[\s\-|:|]/g, '') === '') return;
             let cells = cleanLine.split('|').map(c => c.trim());
@@ -212,7 +212,7 @@ export default function App() {
               if (cleanLine.startsWith('<')) {
                 contentHtml += line;
               } else {
-                contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
+                contentHtml += `<p>${parseInlineMarkdown(cleanLine)}</p>`;
               }
             }
           }
@@ -253,9 +253,10 @@ export default function App() {
       let insideTable = false;
 
       lines.forEach(line => {
-        if (line.startsWith('# ')) return;
+        const cleanLine = line.trim();
+        if (cleanLine.startsWith('# ')) return;
         
-        if (line.startsWith('- ') || line.startsWith('* ')) {
+        if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
           if (insideTable) {
             contentHtml += '</div>';
             insideTable = false;
@@ -264,13 +265,12 @@ export default function App() {
             contentHtml += '<ul>';
             insideList = true;
           }
-          contentHtml += `<li>${parseInlineMarkdown(line.slice(2))}</li>`;
+          contentHtml += `<li>${parseInlineMarkdown(cleanLine.slice(2))}</li>`;
         } else {
           if (insideList) {
             contentHtml += '</ul>';
             insideList = false;
           }
-          const cleanLine = line.trim();
           if (cleanLine.startsWith('|')) {
             if (cleanLine.replace(/[\s\-|:|]/g, '') === '') {
               return;
@@ -295,7 +295,7 @@ export default function App() {
               if (cleanLine.startsWith('<')) {
                 contentHtml += line;
               } else {
-                contentHtml += `<p>${parseInlineMarkdown(line)}</p>`;
+                contentHtml += `<p>${parseInlineMarkdown(cleanLine)}</p>`;
               }
             }
           }
