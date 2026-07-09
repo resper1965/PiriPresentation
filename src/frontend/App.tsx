@@ -536,22 +536,40 @@ export default function App() {
         <header className="header">
           <div className="header-branding">
             <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img" />
-          <div className="header-title-group">
-            <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
-            <span className="header-subtitle">PiriOffice</span>
+            <div className="header-title-group">
+              <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
+              <span className="header-subtitle">PiriOffice</span>
+            </div>
+            <span className="header-badge">Workers AI Active</span>
           </div>
-          <span className="header-badge">Workers AI Active</span>
-        </div>
-        {viewMode === 'slides' && (
-          <button className="btn btn-accent" onClick={() => setViewMode('edit')}>
-            <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Voltar para Edição
-          </button>
-        )}
-      </header>
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            {viewMode === 'slides' && (
+              <button className="btn btn-accent" onClick={() => setViewMode('edit')}>
+                <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m12 19-7-7 7-7" />
+                  <path d="M19 12H5" />
+                </svg>
+                Voltar para Edição
+              </button>
+            )}
+            <button 
+              className="btn-logout"
+              onClick={() => {
+                localStorage.removeItem('piripres_auth_token');
+                setIsAuthenticated(false);
+                setTokenInput('');
+              }}
+              title="Sair do PiriPres"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>Sair</span>
+            </button>
+          </div>
+        </header>
       
       {error && (
         <div className="error-banner">
