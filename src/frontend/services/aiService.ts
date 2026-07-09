@@ -32,11 +32,11 @@ export async function callCritique(
   return readJsonResponse<CritiqueResponse>(res);
 }
 
-export async function callGenerateSlides(text: string): Promise<GenerateResponse> {
+export async function callGenerateSlides(text: string, targetSlides: number): Promise<GenerateResponse> {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text })
+    body: JSON.stringify({ text, targetSlides })
   });
   return readJsonResponse<GenerateResponse>(res);
 }

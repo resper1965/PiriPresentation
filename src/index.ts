@@ -4,8 +4,70 @@ type Bindings = {
   AI: {
     run: (model: string, input: unknown) => Promise<{ response?: string }>;
   };
-  CF_AI_GATEWAY_TOKEN?: string;
+  AI_GATEWAY_TOKEN?: string;
+  AI_GATEWAY_URL?: string;
 };
+
+async function generateCompletion(
+  env: Bindings,
+  preferredModel: string,
+  fallbackModel: string,
+  messages: any[],
+  maxTokens: number
+): Promise<string> {
+  if (env.AI_GATEWAY_URL && env.AI_GATEWAY_TOKEN) {
+    try {
+      const response = await fetch(env.AI_GATEWAY_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: preferredModel,
+          messages: messages,
+          max_tokens: maxTokens
+        })
+      });
+      if (response.ok) {
+        const data: any = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) return content;
+      }
+      console.warn(`AI Gateway preferred model (${preferredModel}) failed or returned empty. Retrying with fallback (${fallbackModel})...`);
+    } catch (e) {
+      console.error(`AI Gateway fetch failed for preferred model:`, e);
+    }
+
+    try {
+      const response = await fetch(env.AI_GATEWAY_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: fallbackModel,
+          messages: messages,
+          max_tokens: maxTokens
+        })
+      });
+      if (response.ok) {
+        const data: any = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) return content;
+      }
+    } catch (e) {
+      console.error(`AI Gateway fetch failed for fallback model:`, e);
+    }
+  }
+
+  const aiResponse = await env.AI.run(fallbackModel, {
+    messages: messages,
+    max_tokens: maxTokens
+  });
+  return aiResponse.response || '';
+}
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -75,9 +137,11 @@ app.post('/api/critique', async (c) => {
   prompt += `\nTexto original:\n"""\n${safeText}\n"""\n\nResponda em formato JSON com duas chaves. Importante: Todas as quebras de linha dentro das strings do JSON devem ser escapadas como \\n (barra invertida seguida de n). Não envie quebras de linha reais dentro dos valores das strings. Exemplo de formato:\n{\n  "critique": "Observação 1\\nObservação 2",\n  "improvedText": "Texto aprimorado aqui"\n}`;
 
   try {
-    // Using Llama 3.1 8B Instruct FP8 on Cloudflare Workers AI with system instruction and token override
-    const aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
-      messages: [
+    const content = await generateCompletion(
+      c.env,
+      '@cf/meta/llama-3.1-70b-instruct',
+      '@cf/meta/llama-3.1-8b-instruct-fp8',
+      [
         {
           role: 'system',
           content: 'Você é um consultor estratégico sênior. Responda apenas em formato JSON estruturado com as chaves "critique" (observações críticas) e "improvedText" (texto aprimorado). Não inclua introdução, cumprimentos, explicações ou markdown fora do JSON. Certifique-se de que a resposta seja um JSON válido.'
@@ -87,10 +151,10 @@ app.post('/api/critique', async (c) => {
           content: prompt
         }
       ],
-      max_tokens: 1500
-    });
+      1500
+    );
     // Parse the inner JSON string from response using safe parsing
-    const parsed = safeJsonParse(aiResponse.response || '{}');
+    const parsed = safeJsonParse(content || '{}');
     return c.json({
       critique: typeof parsed.critique === 'string' ? parsed.critique : '',
       improvedText: typeof parsed.improvedText === 'string' ? parsed.improvedText : ''
@@ -105,24 +169,64 @@ app.post('/api/generate', async (c) => {
   const body = ((await c.req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
   const { text: safeText, error } = validateText(body.text);
   if (error) return c.json({ error }, 400);
+
+  const targetSlides = typeof body.targetSlides === 'number' ? body.targetSlides : 6;
   
-  const prompt = `Converta o seguinte texto em um conjunto de slides estruturados separados estritamente por "---" (horizontal rules).\n\nTexto original:\n"""\n${safeText}\n"""`;
+  const prompt = `Gere exatamente ${targetSlides} slides separados estritamente por "---" (horizontal rules) a partir do seguinte texto.\n\nTexto original:\n"""\n${safeText}\n"""`;
+  const systemContent = `Você é um designer de apresentações sênior e consultor estratégico (estilo McKinsey/BCG). Sua missão é transformar o texto do usuário em slides executivos de altíssima fidelidade.
+
+Regras de estruturação:
+1. Você DEVE gerar exatamente ${targetSlides} slides separados estritamente pela marcação "---". Nem mais, nem menos. Planeje a distribuição do texto com precisão para atingir exatamente este total.
+2. Slide 1 (Capa): Deve conter apenas o título principal em Markdown (# Título) e subtítulo ou data (## Subtítulo). Nunca coloque colunas ou tabelas na Capa.
+3. Todos os outros slides devem começar com um título (# Título do Slide).
+4. Cada slide de conteúdo (a partir do Slide 2) DEVE conter pelo menos uma estrutura visual do nosso HTML toolkit abaixo (nunca responda apenas com blocos de texto puro ou marcadores simples):
+   - Grid de duas colunas:
+     <div class="grid-2-cols">
+       <div class="card">
+         <h3>Título da Coluna A</h3>
+         - Tópico 1
+         - Tópico 2
+       </div>
+       <div class="card">
+         <h3>Título da Coluna B</h3>
+         - Tópico 1
+         - Tópico 2
+       </div>
+     </div>
+   - Grid de três colunas (ex: SWOT ou pilares estratégicos):
+     <div class="grid-3-cols">
+       <div class="card">...</div>
+       <div class="card">...</div>
+       <div class="card">...</div>
+     </div>
+5. Destaque métricas importantes com números gigantes:
+   <div class="metric-highlight">
+     <div class="metric-val">83.5%</div>
+     <div class="metric-lbl">Sinistralidade Recente</div>
+   </div>
+6. Use caixas de Chamada (Callout) para conclusões ou conselhos importantes:
+   <div class="callout-box">Recomendação estratégica aqui...</div>
+7. Para tabelas e comparações tabulares clássicas, use a sintaxe de Tabela Markdown padrão.
+8. NÃO escreva introduções, explicações ou notas adicionais fora dos slides. Comece a resposta direto com o primeiro slide.`;
 
   try {
-    const aiResponse = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
-      messages: [
+    const content = await generateCompletion(
+      c.env,
+      '@cf/meta/llama-3.1-70b-instruct',
+      '@cf/meta/llama-3.1-8b-instruct-fp8',
+      [
         {
           role: 'system',
-          content: 'Você é um designer de apresentações sênior e consultor estratégico (estilo McKinsey/BCG). Sua missão é transformar o texto do usuário em slides executivos de altíssima fidelidade separados estritamente por "---" (horizontal rules).\n\nDiretrizes de Layout (UTILIZE ESTAS TAGS HTML PARA CRIAR LAYOUTS INCRÍVEIS E PROFISSIONAIS):\n1. Slide 1 (Capa): Deve conter apenas o título principal em Markdown (# Título) e subtítulo ou data (## Subtítulo). Nunca coloque colunas ou tabelas na Capa.\n2. Todos os outros slides devem começar com um título (# Título do Slide).\n3. Use estruturas de Colunas para organizar informações lado a lado:\n   - Grid de duas colunas:\n     <div class="grid-2-cols">\n       <div class="card">\n         <h3>Título da Coluna A</h3>\n         - Tópico 1\n         - Tópico 2\n       </div>\n       <div class="card">\n         <h3>Título da Coluna B</h3>\n         - Tópico 1\n         - Tópico 2\n       </div>\n     </div>\n   - Grid de três colunas (ex: SWOT ou pilares estratégicos):\n     <div class="grid-3-cols">\n       <div class="card">...</div>\n       <div class="card">...</div>\n       <div class="card">...</div>\n     </div>\n4. Exiba métricas e estatísticas importantes em destaque gigante:\n   <div class="metric-highlight">\n     <div class="metric-val">83.5%</div>\n     <div class="metric-lbl">Sinistralidade Recente</div>\n   </div>\n5. Use caixas de Chamada (Callout) para conclusões importantes ou recomendações críticas:\n   <div class="callout-box">Recomendação: Avaliar a migração para autogestão se a sinistralidade persistir acima de 80%.</div>\n6. Para tabelas e comparações tabulares clássicas, use a sintaxe de Tabela Markdown padrão.\n7. NÃO escreva introduções, explicações ou notas adicionais fora dos slides. Comece a resposta direto com o primeiro slide.'
+          content: systemContent
         },
         {
           role: 'user',
           content: prompt
         }
       ],
-      max_tokens: 2400
-    });
-    return c.json({ slidesMarkdown: aiResponse.response || '' });
+      2400
+    );
+    return c.json({ slidesMarkdown: content || '' });
   } catch (err: unknown) {
     console.error('AI slide generation failed', err);
     return c.json({ error: 'Erro ao gerar slides com IA. Por favor, tente novamente.' }, 502);

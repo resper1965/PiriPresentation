@@ -25,6 +25,7 @@ export default function App() {
   const [slideHeader, setSlideHeader] = useState('Marsh McLennan');
   const [slideFooter, setSlideFooter] = useState('Confidential - Strategic Review 2026');
   const [slideAuthor, setSlideAuthor] = useState('Sabrina Barros');
+  const [targetSlides, setTargetSlides] = useState(6);
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
 
@@ -216,7 +217,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const res = await callGenerateSlides(text);
+      const res = await callGenerateSlides(text, targetSlides);
       setSlidesMarkdown(res.slidesMarkdown);
       const parsed = parseSlides(res.slidesMarkdown);
       setSlides(parsed);
@@ -502,6 +503,19 @@ export default function App() {
                       placeholder="Autor (ex: Sabrina Barros)"
                     />
                   </div>
+                </div>
+                <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
+                  <select
+                    className="custom-inst-input"
+                    value={targetSlides}
+                    onChange={(e) => setTargetSlides(Number(e.target.value))}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer', backgroundColor: 'var(--color-white)', border: '1px solid #E2E8F0' }}
+                  >
+                    {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(n => (
+                      <option key={n} value={n}>{n} Slides</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="action-buttons-group">
                   <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
