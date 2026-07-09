@@ -167,6 +167,8 @@ body {
 
 .panel-left {
   border-right: 1px solid #E2E8F0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .panel-right {
@@ -198,12 +200,14 @@ body {
   flex-direction: column;
   flex: 1;
   gap: 1.25rem;
+  overflow: hidden;
 }
 
 .textarea-wrapper {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 150px;
   border: 1px solid #E2E8F0;
   border-radius: 10px;
   overflow: hidden;
@@ -1016,6 +1020,67 @@ textarea {
   from {
     opacity: 0;
     transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Accordion Styles */
+.accordion-wrapper {
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  background: var(--color-bg-light);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: var(--color-bg-light);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-dark);
+  text-align: left;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.accordion-header:hover {
+  background: #E2E8F0;
+}
+
+.accordion-chevron {
+  color: #64748B;
+  transition: transform 0.2s ease;
+}
+
+.accordion-chevron.open {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  padding: 1rem;
+  background: var(--color-white);
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  animation: accordionSlideDown 0.2s ease-out;
+}
+
+@keyframes accordionSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;

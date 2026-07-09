@@ -33,6 +33,7 @@ export default function App() {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('piripres_auth_token') || '');
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
+  const [showBranding, setShowBranding] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('piripres_auth_token');
@@ -628,37 +629,60 @@ export default function App() {
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value)}
                 />
-                <div className="branding-inputs">
-                  <div className="input-group">
-                    <label>Cabeçalho:</label>
-                    <input
-                      type="text"
-                      className="custom-inst-input"
-                      value={slideHeader}
-                      onChange={(e) => setSlideHeader(e.target.value)}
-                      placeholder="Empresa (ex: Marsh McLennan)"
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Rodapé:</label>
-                    <input
-                      type="text"
-                      className="custom-inst-input"
-                      value={slideFooter}
-                      onChange={(e) => setSlideFooter(e.target.value)}
-                      placeholder="Confidencialidade"
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Autor:</label>
-                    <input
-                      type="text"
-                      className="custom-inst-input"
-                      value={slideAuthor}
-                      onChange={(e) => setSlideAuthor(e.target.value)}
-                      placeholder="Autor (ex: Sabrina Barros)"
-                    />
-                  </div>
+                <div className="accordion-wrapper">
+                  <button
+                    type="button"
+                    className="accordion-header"
+                    onClick={() => setShowBranding(!showBranding)}
+                  >
+                    <span>Configurações dos Slides (Metadados)</span>
+                    <svg
+                      className={`accordion-chevron ${showBranding ? 'open' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ width: '16px', height: '16px', transition: 'transform 0.2s' }}
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  {showBranding && (
+                    <div className="accordion-body branding-inputs">
+                      <div className="input-group">
+                        <label>Cabeçalho:</label>
+                        <input
+                          type="text"
+                          className="custom-inst-input"
+                          value={slideHeader}
+                          onChange={(e) => setSlideHeader(e.target.value)}
+                          placeholder="Empresa (ex: Marsh McLennan)"
+                        />
+                      </div>
+                      <div className="input-group">
+                        <label>Rodapé:</label>
+                        <input
+                          type="text"
+                          className="custom-inst-input"
+                          value={slideFooter}
+                          onChange={(e) => setSlideFooter(e.target.value)}
+                          placeholder="Confidencialidade"
+                        />
+                      </div>
+                      <div className="input-group">
+                        <label>Autor:</label>
+                        <input
+                          type="text"
+                          className="custom-inst-input"
+                          value={slideAuthor}
+                          onChange={(e) => setSlideAuthor(e.target.value)}
+                          placeholder="Autor (ex: Sabrina Barros)"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
