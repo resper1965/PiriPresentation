@@ -78,8 +78,24 @@ body {
   margin: 0;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 1.4rem;
-  letter-spacing: -0.02em;
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-subtitle {
+  font-size: 0.72rem;
+  color: rgba(252, 251, 249, 0.75);
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 0.05rem;
 }
 
 .header-badge {

@@ -350,7 +350,7 @@ export default function App() {
         <body>
           ${slidesHtml}
           <script>
-            console.log("Apresentação estática gerada via SabrinaStyle.");
+            console.log("Apresentação estática gerada via PiriPres.");
           </script>
         </body>
       </html>
@@ -360,7 +360,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Apresentacao_SabrinaStyle.html';
+    a.download = 'Apresentacao_PiriPres.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -379,7 +379,10 @@ export default function App() {
             <path d="m9 8 3-3 3 3" />
             <path d="M12 5v6" />
           </svg>
-          <h1>SabrinaStyle Builder</h1>
+          <div className="header-title-group">
+            <h1>PiriPres</h1>
+            <span className="header-subtitle">Parte do PiriOffice</span>
+          </div>
           <span className="header-badge">Workers AI Active</span>
         </div>
         {viewMode === 'slides' && (
