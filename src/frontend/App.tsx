@@ -39,9 +39,19 @@ export default function App() {
   };
 
   const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev =>
-      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
-    );
+    setSelectedSkills(prev => {
+      if (prev.includes(skill)) {
+        return prev.filter(s => s !== skill);
+      } else {
+        let next = [...prev, skill];
+        if (skill === 'concision') {
+          next = next.filter(s => s !== 'storytelling');
+        } else if (skill === 'storytelling') {
+          next = next.filter(s => s !== 'concision');
+        }
+        return next;
+      }
+    });
   };
 
   const handleAnalyze = async () => {

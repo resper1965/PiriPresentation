@@ -856,7 +856,8 @@ textarea {
 /* Branding Inputs Styles */
 .branding-inputs {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.8rem;
   margin-bottom: 1rem;
 }
 
