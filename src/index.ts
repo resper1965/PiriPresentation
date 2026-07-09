@@ -9,6 +9,22 @@ type Bindings = {
   AUTH_TOKEN?: string;
 };
 
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 12000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
 async function generateCompletion(
   env: Bindings,
   preferredModel: string,
@@ -18,7 +34,7 @@ async function generateCompletion(
 ): Promise<string> {
   if (env.AI_GATEWAY_URL && env.AI_GATEWAY_TOKEN) {
     try {
-      const response = await fetch(env.AI_GATEWAY_URL, {
+      const response = await fetchWithTimeout(env.AI_GATEWAY_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
@@ -29,7 +45,7 @@ async function generateCompletion(
           messages: messages,
           max_tokens: maxTokens
         })
-      });
+      }, 12000);
       if (response.ok) {
         const data: any = await response.json();
         const content = data?.choices?.[0]?.message?.content;
@@ -37,11 +53,11 @@ async function generateCompletion(
       }
       console.warn(`AI Gateway preferred model (${preferredModel}) failed or returned empty. Retrying with fallback (${fallbackModel})...`);
     } catch (e) {
-      console.error(`AI Gateway fetch failed for preferred model:`, e);
+      console.error(`AI Gateway fetch failed or timed out for preferred model:`, e);
     }
 
     try {
-      const response = await fetch(env.AI_GATEWAY_URL, {
+      const response = await fetchWithTimeout(env.AI_GATEWAY_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${env.AI_GATEWAY_TOKEN}`,
@@ -52,14 +68,14 @@ async function generateCompletion(
           messages: messages,
           max_tokens: maxTokens
         })
-      });
+      }, 15000);
       if (response.ok) {
         const data: any = await response.json();
         const content = data?.choices?.[0]?.message?.content;
         if (content) return content;
       }
     } catch (e) {
-      console.error(`AI Gateway fetch failed for fallback model:`, e);
+      console.error(`AI Gateway fetch failed or timed out for fallback model:`, e);
     }
   }
 
@@ -71,6 +87,20 @@ async function generateCompletion(
 }
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('X-XSS-Protection', '1; mode=block');
+  
+  if (c.req.path.startsWith('/api/')) {
+    c.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+  }
+});
 
 app.use('/api/*', async (c, next) => {
   if (c.req.path === '/api/health') {
