@@ -100,8 +100,9 @@ export default function App() {
           return;
         }
 
+        const originalClasses = Array.from(child.classList);
         Array.from(child.attributes).forEach(attr => child.removeAttribute(attr.name));
-        const safeClasses = Array.from(child.classList).filter(className => allowedClasses.has(className));
+        const safeClasses = originalClasses.filter(className => allowedClasses.has(className));
         if (safeClasses.length > 0) child.setAttribute('class', safeClasses.join(' '));
         clean(child);
       });
