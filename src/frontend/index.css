@@ -189,7 +189,7 @@ body {
 .panel-title svg {
   width: 20px;
   height: 20px;
-  color: var(--color-teal);
+  color: #64748B;
 }
 
 /* Editor Panel Custom Formats */
@@ -256,7 +256,7 @@ textarea {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   background: var(--color-bg-light);
   border: 1px solid #E2E8F0;
   padding: 0.5rem 1rem;
@@ -310,7 +310,7 @@ textarea {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-flex;
@@ -412,7 +412,7 @@ textarea {
 .critique-card h3 svg {
   width: 18px;
   height: 18px;
-  color: var(--color-semantic-orange);
+  color: #64748B;
 }
 
 .improved-card {
@@ -453,7 +453,7 @@ textarea {
 .card-header-actions h3 svg {
   width: 18px;
   height: 18px;
-  color: var(--color-teal);
+  color: #64748B;
 }
 
 .btn-copy {
@@ -463,7 +463,7 @@ textarea {
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -869,7 +869,7 @@ textarea {
 
 .branding-inputs .input-group label {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-dark);
 }
 .slide-layout.cover .slide-author,

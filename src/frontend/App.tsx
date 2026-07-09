@@ -589,7 +589,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
                   <select
                     className="custom-inst-input"
                     value={targetSlides}
