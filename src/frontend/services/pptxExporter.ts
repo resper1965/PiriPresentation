@@ -55,8 +55,8 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
         });
       }
     } else {
-      // Standard Slide: Cream background (#FCFBF9)
-      pptSlide.background = { fill: 'FCFBF9' };
+      // Standard Slide: Navy background (#003B70)
+      pptSlide.background = { fill: '003B70' };
 
       // Header text (top right)
       if (slideHeader) {
@@ -80,7 +80,7 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
         h: 0.8,
         fontSize: 24,
         bold: true,
-        color: '003B70',
+        color: 'FFFFFF',
         fontFace: 'Georgia'
       });
 
@@ -109,8 +109,8 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
               text: cell.textContent || '',
               options: {
                 bold: isHeader,
-                fill: { color: isHeader ? 'E2E8F0' : 'FFFFFF' },
-                color: isHeader ? '003B70' : '1E293B'
+                fill: { color: isHeader ? '1E293B' : '0A487E' },
+                color: isHeader ? 'FFFFFF' : 'F8FAFC'
               }
             });
           });
@@ -123,7 +123,7 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
           w: 8.4,
           fontSize: 13,
           fontFace: 'Arial',
-          border: { type: 'solid', color: 'CBD5E1', pt: 1 }
+          border: { type: 'solid', color: '1A588E', pt: 1 }
         });
       } else {
         const bullets: { text: string }[] = [];
@@ -138,7 +138,7 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
             w: 8.4,
             h: 3.5,
             fontSize: 16,
-            color: '1E293B',
+            color: 'F8FAFC',
             fontFace: 'Arial', // Sans-serif fallback
             bullet: true
           });
@@ -154,7 +154,7 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
             w: 8.4,
             h: 3.5,
             fontSize: 16,
-            color: '1E293B',
+            color: 'F8FAFC',
             fontFace: 'Arial'
           });
         }

@@ -571,14 +571,14 @@ textarea {
 }
 
 .slide-layout.standard {
-  background-color: #FCFBF9; /* Warm Cream background */
-  color: var(--color-text-dark);
+  background-color: var(--color-navy);
+  color: #F8FAFC;
 }
 
 .slide-layout.standard .slide-title {
   font-family: var(--font-heading);
   font-size: 2.1rem;
-  color: var(--color-navy);
+  color: var(--color-white);
   border-bottom: 2px solid var(--color-teal);
   padding-bottom: 0.5rem;
   margin-top: 0;
@@ -660,17 +660,18 @@ textarea {
 /* Table styling */
 .table-container {
   margin: 1.5rem 0;
-  border: 1px solid #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   overflow: hidden;
-  background-color: var(--color-white);
-  box-shadow: var(--shadow-sm);
+  background-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .table-row {
   display: flex;
-  border-bottom: 1px solid #F1F3F5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.6rem 0;
+  color: #E2E8F0;
 }
 
 .table-row:last-child {
@@ -679,9 +680,9 @@ textarea {
 
 .table-row.header-row {
   font-weight: 600;
-  background-color: var(--color-bg-light);
+  background-color: rgba(255, 255, 255, 0.08);
   border-bottom: 2px solid var(--color-teal);
-  color: var(--color-navy);
+  color: var(--color-white);
 }
 
 .table-cell {
@@ -776,11 +777,11 @@ textarea {
 }
 
 .slide-content .card {
-  background: var(--color-white);
-  border: 1px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
 }
 
@@ -788,7 +789,7 @@ textarea {
   margin-top: 0;
   margin-bottom: 0.75rem;
   font-family: var(--font-heading);
-  color: var(--color-navy);
+  color: var(--color-white);
   font-size: 1.25rem;
   border-bottom: 1.5px solid var(--color-teal);
   padding-bottom: 0.4rem;
@@ -803,6 +804,7 @@ textarea {
 .slide-content .card li {
   margin-bottom: 0.4rem;
   font-size: 1.05rem;
+  color: #E2E8F0;
 }
 
 .slide-content .metric-highlight {
@@ -812,35 +814,36 @@ textarea {
   justify-content: center;
   text-align: center;
   padding: 1.25rem;
-  background: var(--color-white);
-  border: 1px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
 }
 
 .slide-content .metric-highlight .metric-val {
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 700;
   color: var(--color-teal);
   font-family: var(--font-heading);
   line-height: 1;
+  text-shadow: 0 0 12px rgba(0, 163, 166, 0.35);
 }
 
 .slide-content .metric-highlight .metric-lbl {
   font-size: 0.95rem;
-  color: var(--color-text-dark);
+  color: #E2E8F0;
   margin-top: 0.5rem;
   font-weight: 600;
 }
 
 .slide-content .callout-box {
-  background: rgba(0, 163, 166, 0.04);
+  background: rgba(0, 163, 166, 0.08);
   border-left: 4px solid var(--color-teal);
   padding: 1.1rem;
   border-radius: 4px;
   font-style: italic;
-  color: var(--color-text-dark);
+  color: #F8FAFC;
   margin-bottom: 1.25rem;
   font-size: 1.1rem;
 }
