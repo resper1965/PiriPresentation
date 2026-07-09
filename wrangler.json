@@ -16,6 +16,7 @@
   "ai": {
     "binding": "AI"
   },
+  "workers_dev": true,
   "routes": [
     { "pattern": "piri.sabrinabarros.com", "custom_domain": true }
   ]
