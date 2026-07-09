@@ -304,8 +304,33 @@ app.post('/api/generate', async (c) => {
   const targetSlides = typeof body.targetSlides === 'number' ? body.targetSlides : 6;
 
   try {
-    // 1. Planner Agent: Plan slide titles, types, and focus descriptions in JSON format
-    const planPrompt = `Você é um planejador de apresentações sênior. Sua tarefa é analisar o texto de entrada na tag <user_text> e dividi-lo em um plano estratégico de exatamente ${targetSlides} slides.
+    const hasSeparators = safeText.includes('\n---') || safeText.includes('\r\n---');
+    let outline: { title: string; type: 'cover' | 'standard'; focus: string }[] = [];
+
+    if (hasSeparators) {
+      // Split the text by slide separator and trim parts
+      const fragments = safeText.split(/\r?\n---\r?\n/).map(f => f.trim()).filter(Boolean);
+      outline = fragments.map((fragment, index) => {
+        const lines = fragment.split('\n').map(l => l.trim()).filter(Boolean);
+        let title = `Slide ${index + 1}`;
+        for (const line of lines) {
+          if (line.startsWith('#')) {
+            title = line.replace(/^#+\s*/, '');
+            break;
+          }
+        }
+        if (title === `Slide ${index + 1}` && lines.length > 0 && lines[0].length < 40) {
+          title = lines[0];
+        }
+        return {
+          title,
+          type: index === 0 ? 'cover' as const : 'standard' as const,
+          focus: fragment
+        };
+      });
+    } else {
+      // 1. Planner Agent: Plan slide titles, types, and focus descriptions in JSON format
+      const planPrompt = `Você é um planejador de apresentações sênior. Sua tarefa é analisar o texto de entrada na tag <user_text> e dividi-lo em um plano estratégico de exatamente ${targetSlides} slides.
 Retorne APENAS um array JSON contendo objetos com as chaves:
 - "title": o título do slide (em português)
 - "type": "cover" para o primeiro slide, e "standard" para os slides seguintes
@@ -317,31 +342,57 @@ Não inclua explicações, introdução ou notas fora do JSON. Responda apenas c
 ${safeText}
 </user_text>`;
 
-    const planContent = await generateCompletion(
-      c.env,
-      '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-      '@cf/meta/llama-3.1-8b-instruct-fp8',
-      [
-        {
-          role: 'system',
-          content: 'Você é um planejador de apresentações sênior especializado em estruturação McKinsey/BCG. Você deve responder apenas com um array JSON válido contendo exatamente o número planejado de slides.'
-        },
-        {
-          role: 'user',
-          content: planPrompt
-        }
-      ],
-      1500
-    );
+      const planContent = await generateCompletion(
+        c.env,
+        '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        '@cf/meta/llama-3.1-8b-instruct-fp8',
+        [
+          {
+            role: 'system',
+            content: 'Você é um planejador de apresentações sênior especializado em estruturação McKinsey/BCG. Você deve responder apenas com um array JSON válido contendo exatamente o número planejado de slides.'
+          },
+          {
+            role: 'user',
+            content: planPrompt
+          }
+        ],
+        1500
+      );
 
-    const outline = parseOutline(planContent || '[]');
-    if (!Array.isArray(outline) || outline.length === 0) {
-      throw new Error('Falha ao planejar os slides. Outline inválido retornado pela IA.');
+      const parsedOutline = parseOutline(planContent || '[]');
+      if (!Array.isArray(parsedOutline) || parsedOutline.length === 0) {
+        throw new Error('Falha ao planejar os slides. Outline inválido retornado pela IA.');
+      }
+      outline = parsedOutline.map(item => ({
+        title: typeof item.title === 'string' ? item.title : 'Slide',
+        type: item.type === 'cover' ? 'cover' as const : 'standard' as const,
+        focus: typeof item.focus === 'string' ? item.focus : ''
+      }));
     }
 
     // 2. Writer Agents: Generate content for each slide in parallel
     const slideTasks = outline.map(async (slide, index) => {
-      const slidePrompt = `Gere o conteúdo para o slide de índice ${index + 1} da apresentação.
+      let slidePrompt = '';
+      if (hasSeparators) {
+        // Designer mode: Transform the user's specific slide draft into a styled slide
+        slidePrompt = `Gere o conteúdo final do slide de índice ${index + 1} da apresentação, atuando como um Designer e redator sênior.
+Você deve formatar o rascunho de slide fornecido abaixo em HTML semântico utilizando o nosso toolkit.
+
+Rascunho de Conteúdo para este Slide:
+"""
+${slide.focus}
+"""
+
+Instruções importantes:
+- Baseie-se estritamente no rascunho de conteúdo fornecido. Não remova informações estratégicas e não crie tópicos adicionais que não estejam no rascunho.
+- Retorne o slide encapsulado na tag XML: <slide type="${slide.type}"> ... </slide>.
+- Se type for "cover", crie a capa da apresentação contendo apenas o título principal em Markdown (# Título) e o subtítulo (## Subtítulo). Não use tabelas ou colunas na capa.
+- Se type for "standard", comece com o título do slide (# Título do Slide) e use pelo menos uma estrutura visual do nosso HTML toolkit (grids de colunas, caixas de callout, tabelas markdown ou métricas de destaque) para organizar as informações de forma executiva.
+- Certifique-se de respeitar a REGRA DE CONTRASTE: nunca use a cor Accent Teal (#00A3A6) para textos normais ou parágrafos, apenas para números gigantes de métricas (metric-val) ou elementos decorativos.
+- Não escreva nenhuma introdução, notas explicativas ou tags fora de <slide> e </slide>.`;
+      } else {
+        // Planner mode: Generate content from general user text and planned slide focus
+        slidePrompt = `Gere o conteúdo para o slide de índice ${index + 1} da apresentação.
 Título do Slide: "${slide.title}"
 Tipo do Slide: "${slide.type}"
 Foco do Slide: "${slide.focus}"
@@ -356,6 +407,7 @@ Instruções importantes:
 <user_text>
 ${safeText}
 </user_text>`;
+      }
 
       const systemContent = `Você é um designer de apresentações sênior (estilo McKinsey/BCG). Sua missão é transformar o plano de conteúdo fornecido em um slide executivo de altíssima fidelidade.\n\nRegras de estruturação e ACESSIBILIDADE DE COR:\n- REGRA DE CONTRASTE: Nunca use a cor Accent Teal (#00A3A6) para textos normais, descrições, tabelas ou parágrafos. O Teal possui baixo contraste sobre o fundo Warm Cream e deve ser utilizado exclusivamente para números gigantes em realces de métricas (metric-val) ou linhas horizontais decorativas. Textos normais de parágrafo ou listas devem ser escritos em cores de alto contraste.\n\nRegras do HTML toolkit a serem usadas em slides "standard":\n- Grid de duas colunas:\n  <div class="grid-2-cols">\n    <div class="card">\n      <h3>Título A</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n    <div class="card">\n      <h3>Título B</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n  </div>\n- Grid de três colunas:\n  <div class="grid-3-cols">\n    <div class="card">...</div>\n    <div class="card">...</div>\n    <div class="card">...</div>\n  </div>\n- Destacar números/métricas gigantes:\n  <div class="metric-highlight">\n    <div class="metric-val">94.2%</div>\n    <div class="metric-lbl">Taxa de Conversão</div>\n  </div>\n- Caixa de recomendação (Callout):\n  <div class="callout-box">Recomendação estratégica importante aqui...</div>\n- Tabelas: Use a sintaxe de tabelas markdown padrão.\n\nExemplo de saída esperada para um slide standard:\n<slide type="standard">\n# Desempenho Operacional Q2\n<div class="metric-highlight">\n  <div class="metric-val">83.5%</div>\n  <div class="metric-lbl">Sinistralidade Operacional</div>\n</div>\n<div class="grid-2-cols">\n  <div class="card">\n    <h3>Pontos de Destaque</h3>\n    - Redução de custos administrativos\n  </div>\n  <div class="card">\n    <h3>Gargalos</h3>\n    - Aumento na sinistralidade YoY\n  </div>\n</div>\n</slide>`;
 
