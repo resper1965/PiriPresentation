@@ -511,6 +511,136 @@ ${safeText}
   }
 });
 
+app.post('/api/wizard/blueprint', async (c) => {
+  const body = ((await c.req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
+  const topic = typeof body.topic === 'string' ? body.topic.trim() : '';
+  const audience = typeof body.audience === 'string' ? body.audience.trim() : '';
+  const goal = typeof body.goal === 'string' ? body.goal.trim() : '';
+  const targetSlides = typeof body.targetSlides === 'number' ? body.targetSlides : 6;
+
+  if (!topic) {
+    return c.json({ error: 'O tema da apresentação é obrigatório.' }, 400);
+  }
+
+  const prompt = `Você é um planejador estratégico sênior de apresentações corporativas no estilo McKinsey/BCG.
+Análise as informações fornecidas para a apresentação:
+- Tema: "${topic}"
+- Público-Alvo: "${audience || 'Público corporativo geral'}"
+- Objetivo Principal: "${goal || 'Apresentar com clareza e impacto'}"
+- Número Planejado de Slides: ${targetSlides}
+
+Sua tarefa é planejar a apresentação e retornar uma resposta em formato JSON válido contendo exatamente as chaves "blueprint" e "outline":
+1. "blueprint": Um resumo estratégico em português (máximo de 2 parágrafos) cobrindo a mensagem-chave central, abordagem de storytelling recomendada e tom de voz ideal.
+2. "outline": Um array de exatamente ${targetSlides} objetos. Cada objeto representa um slide e deve conter as seguintes chaves:
+   - "title": Título sugerido para o slide (curto e executivo).
+   - "type": "cover" para o primeiro slide, e "standard" para os slides seguintes.
+   - "focus": Descrição resumida (foco de conteúdo) sobre qual informação deve ser abordada nesse slide específico.
+
+Responda APENAS com o JSON válido. Não envie introduções, explicações ou notas fora do JSON.`;
+
+  try {
+    const aiContent = await generateCompletion(
+      c.env,
+      '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+      '@cf/meta/llama-3.1-8b-instruct-fp8',
+      [
+        {
+          role: 'system',
+          content: 'Você é um planejador estratégico sênior especializado em estruturação de apresentações McKinsey. Você responde apenas com JSON válido.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      1500
+    );
+
+    const start = aiContent.indexOf('{');
+    const end = aiContent.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      const jsonStr = aiContent.substring(start, end + 1);
+      try {
+        const parsed = JSON.parse(jsonStr);
+        return c.json(parsed);
+      } catch (e) {
+        // Fallback below
+      }
+    }
+    throw new Error('Falha ao parsear o JSON de planejamento retornado pela IA.');
+  } catch (err: unknown) {
+    console.error('Wizard blueprint generation failed', err);
+    return c.json({ error: 'Erro ao gerar o planejamento dos slides. Por favor, tente novamente.' }, 502);
+  }
+});
+
+app.post('/api/wizard/draft', async (c) => {
+  const body = ((await c.req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
+  const outline = Array.isArray(body.outline) ? body.outline : [];
+  const blueprint = typeof body.blueprint === 'string' ? body.blueprint : '';
+  const topic = typeof body.topic === 'string' ? body.topic : '';
+  const audience = typeof body.audience === 'string' ? body.audience : '';
+  const goal = typeof body.goal === 'string' ? body.goal : '';
+
+  if (outline.length === 0) {
+    return c.json({ error: 'A estrutura de slides (outline) é necessária.' }, 400);
+  }
+
+  try {
+    const draftTasks = outline.map(async (slide: any, index: number) => {
+      const slidePrompt = `Aja como um redator de apresentações profissional de alto nível.
+Você deve escrever o rascunho de conteúdo em tópicos (bullet points) para o slide de índice ${index + 1}.
+
+Informações estratégicas:
+- Tema: "${topic}"
+- Público-Alvo: "${audience}"
+- Objetivo Principal: "${goal}"
+- Contexto do Planejamento: "${blueprint}"
+
+Detalhes do Slide planejado:
+- Título do Slide: "${slide.title || `Slide ${index + 1}`}"
+- Tipo do Slide: "${slide.type || 'standard'}"
+- Foco de Conteúdo planejado: "${slide.focus || ''}"
+
+Sua tarefa é gerar o rascunho de texto e tópicos brutos para este slide.
+Instruções:
+- Se for a capa (type: "cover"), escreva apenas o Título principal e o Subtítulo complementar.
+- Se for slide de conteúdo (type: "standard"), gere uma lista estruturada de 3 a 5 bullet points concisos e diretos com dados relevantes, métricas e análises executivas. Use tópicos marcados com hífen (-).
+- NÃO gere tags HTML, tabelas formatadas ou layouts de design (como grids). Foque estritamente no conteúdo em texto cru (Markdown).
+- Responda apenas com o texto cru do slide, sem introduções, títulos adicionais ou observações.`;
+
+      const draftContent = await generateCompletion(
+        c.env,
+        '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        '@cf/meta/llama-3.1-8b-instruct-fp8',
+        [
+          {
+            role: 'system',
+            content: 'Você é um redator sênior especializado em apresentações de consultoria executiva. Você escreve apenas o conteúdo textual do slide solicitado.'
+          },
+          {
+            role: 'user',
+            content: slidePrompt
+          }
+        ],
+        800
+      );
+
+      return {
+        title: slide.title || `Slide ${index + 1}`,
+        type: slide.type || 'standard',
+        draft: draftContent || ''
+      };
+    });
+
+    const drafts = await Promise.all(draftTasks);
+    return c.json({ drafts });
+  } catch (err: unknown) {
+    console.error('Wizard draft generation failed', err);
+    return c.json({ error: 'Erro ao gerar o rascunho dos slides. Por favor, tente novamente.' }, 502);
+  }
+});
+
 app.get('/api/health', (c) => {
   return c.json({ status: 'ok', time: new Date().toISOString() });
 });

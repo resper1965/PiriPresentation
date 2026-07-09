@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { callCritique, callGenerateSlides } from './services/aiService.ts';
+import { 
+  callCritique, 
+  callGenerateSlides, 
+  callWizardBlueprint, 
+  callWizardDraft 
+} from './services/aiService.ts';
 
 interface SlideData {
   title: string;
@@ -34,6 +39,17 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
   const [showBranding, setShowBranding] = useState(false);
+
+  // Wizard Mode States
+  const [creatorMode, setCreatorMode] = useState<'direct' | 'wizard'>('direct');
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardTopic, setWizardTopic] = useState('');
+  const [wizardAudience, setWizardAudience] = useState('');
+  const [wizardGoal, setWizardGoal] = useState('');
+  const [wizardTargetSlides, setWizardTargetSlides] = useState(6);
+  const [wizardBlueprint, setWizardBlueprint] = useState('');
+  const [wizardOutline, setWizardOutline] = useState<{ title: string; type: 'cover' | 'standard'; focus: string }[]>([]);
+  const [wizardDrafts, setWizardDrafts] = useState<{ title: string; type: 'cover' | 'standard'; draft: string }[]>([]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('piripres_auth_token');
@@ -315,6 +331,76 @@ export default function App() {
     return slidesList;
   };
 
+  const handleGenerateBlueprint = async () => {
+    if (!wizardTopic.trim()) {
+      setError('Por favor, informe o tema da apresentação.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await callWizardBlueprint(wizardTopic, wizardAudience, wizardGoal, wizardTargetSlides);
+      setWizardBlueprint(res.blueprint);
+      setWizardOutline(res.outline);
+      setWizardStep(2);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateDrafts = async () => {
+    if (wizardOutline.length === 0) {
+      setError('A estrutura de slides está vazia.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await callWizardDraft(
+        wizardOutline, 
+        wizardBlueprint, 
+        wizardTopic, 
+        wizardAudience, 
+        wizardGoal
+      );
+      setWizardDrafts(res.drafts);
+      setWizardStep(3);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinalizeWizardSlides = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const formattedScript = wizardDrafts.map((slide, index) => {
+        return `Slide ${index + 1}: ${slide.title}\n${slide.draft}`;
+      }).join('\n\n---\n\n');
+
+      setText(formattedScript);
+
+      const res = await callGenerateSlides(formattedScript, wizardDrafts.length);
+      setSlidesMarkdown(res.slidesMarkdown);
+      const parsed = parseSlides(res.slidesMarkdown);
+      setSlides(parsed);
+      setCurrentSlideIndex(0);
+      setViewMode('slides');
+      setWizardStep(4);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGenerateSlides = async () => {
     setLoading(true);
     setError('');
@@ -583,149 +669,426 @@ export default function App() {
       {viewMode === 'edit' ? (
         <main className="workspace">
           <section className="panel panel-left">
-            <h2 className="panel-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-              Roteiro & Conteúdo
-            </h2>
-            <div className="editor-container">
-              <div className="textarea-wrapper">
-                <textarea
-                  placeholder="Digite o rascunho ou a história de sua apresentação aqui..."
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                />
-                <div className="textarea-footer">
-                  {text.length} caracteres
-                </div>
-              </div>
-              <div className="controls">
-                <div className="skills-list">
-                  <label className={`skill-item ${selectedSkills.includes('concision') ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSkills.includes('concision')}
-                      onChange={() => toggleSkill('concision')}
-                    />
-                    Concisão
-                  </label>
-                  <label className={`skill-item ${selectedSkills.includes('storytelling') ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSkills.includes('storytelling')}
-                      onChange={() => toggleSkill('storytelling')}
-                    />
-                    Storytelling
-                  </label>
-                  <label className={`skill-item ${selectedSkills.includes('critical') ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSkills.includes('critical')}
-                      onChange={() => toggleSkill('critical')}
-                    />
-                    Análise Crítica
-                  </label>
-                  <label className={`skill-item ${selectedSkills.includes('pnl') ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSkills.includes('pnl')}
-                      onChange={() => toggleSkill('pnl')}
-                    />
-                    PNL
-                  </label>
-                </div>
-                <input
-                  type="text"
-                  className="custom-inst-input"
-                  placeholder="Instruções personalizadas adicionais (ex: 'Foco em tom corporativo')..."
-                  value={customInstructions}
-                  onChange={(e) => setCustomInstructions(e.target.value)}
-                />
-                <div className="accordion-wrapper">
-                  <button
-                    type="button"
-                    className="accordion-header"
-                    onClick={() => setShowBranding(!showBranding)}
-                  >
-                    <span>Configurações dos Slides (Metadados)</span>
-                    <svg
-                      className={`accordion-chevron ${showBranding ? 'open' : ''}`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ width: '16px', height: '16px', transition: 'transform 0.2s' }}
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-                  {showBranding && (
-                    <div className="accordion-body branding-inputs">
-                      <div className="input-group">
-                        <label>Cabeçalho:</label>
-                        <input
-                          type="text"
-                          className="custom-inst-input"
-                          value={slideHeader}
-                          onChange={(e) => setSlideHeader(e.target.value)}
-                          placeholder="Empresa (ex: Marsh McLennan)"
-                        />
-                      </div>
-                      <div className="input-group">
-                        <label>Rodapé:</label>
-                        <input
-                          type="text"
-                          className="custom-inst-input"
-                          value={slideFooter}
-                          onChange={(e) => setSlideFooter(e.target.value)}
-                          placeholder="Confidencialidade"
-                        />
-                      </div>
-                      <div className="input-group">
-                        <label>Autor:</label>
-                        <input
-                          type="text"
-                          className="custom-inst-input"
-                          value={slideAuthor}
-                          onChange={(e) => setSlideAuthor(e.target.value)}
-                          placeholder="Autor (ex: Sabrina Barros)"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
-                  <select
-                    className="custom-inst-input"
-                    value={targetSlides}
-                    onChange={(e) => setTargetSlides(Number(e.target.value))}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer', backgroundColor: 'var(--color-white)', border: '1px solid #E2E8F0' }}
-                  >
-                    {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(n => (
-                      <option key={n} value={n}>{n} Slides</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="action-buttons-group">
-                  <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
-                    {loading ? 'Analisando...' : 'Analisar Texto'}
-                  </button>
-                  <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
-                    {loading ? 'Gerando...' : 'Gerar Slides'}
-                  </button>
-                  {slides.length > 0 && (
-                    <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
-                      Visualizar Slides
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="mode-tabs">
+              <button 
+                className={`mode-tab ${creatorMode === 'direct' ? 'active' : ''}`}
+                onClick={() => setCreatorMode('direct')}
+              >
+                Criador Direto
+              </button>
+              <button 
+                className={`mode-tab ${creatorMode === 'wizard' ? 'active' : ''}`}
+                onClick={() => setCreatorMode('wizard')}
+              >
+                Assistente Guiado
+              </button>
             </div>
+
+            {creatorMode === 'direct' ? (
+              <>
+                <h2 className="panel-title" style={{ marginTop: 0 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Roteiro & Conteúdo
+                </h2>
+                <div className="editor-container">
+                  <div className="textarea-wrapper">
+                    <textarea
+                      placeholder="Digite o rascunho ou a história de sua apresentação aqui..."
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                    />
+                    <div className="textarea-footer">
+                      {text.length} caracteres
+                    </div>
+                  </div>
+                  <div className="controls">
+                    <div className="skills-list">
+                      <label className={`skill-item ${selectedSkills.includes('concision') ? 'active' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSkills.includes('concision')}
+                          onChange={() => toggleSkill('concision')}
+                        />
+                        Concisão
+                      </label>
+                      <label className={`skill-item ${selectedSkills.includes('storytelling') ? 'active' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSkills.includes('storytelling')}
+                          onChange={() => toggleSkill('storytelling')}
+                        />
+                        Storytelling
+                      </label>
+                      <label className={`skill-item ${selectedSkills.includes('critical') ? 'active' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSkills.includes('critical')}
+                          onChange={() => toggleSkill('critical')}
+                        />
+                        Análise Crítica
+                      </label>
+                      <label className={`skill-item ${selectedSkills.includes('pnl') ? 'active' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSkills.includes('pnl')}
+                          onChange={() => toggleSkill('pnl')}
+                        />
+                        PNL
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      className="custom-inst-input"
+                      placeholder="Instruções personalizadas adicionais (ex: 'Foco em tom corporativo')..."
+                      value={customInstructions}
+                      onChange={(e) => setCustomInstructions(e.target.value)}
+                    />
+                    <div className="accordion-wrapper">
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => setShowBranding(!showBranding)}
+                      >
+                        <span>Configurações dos Slides (Metadados)</span>
+                        <svg
+                          className={`accordion-chevron ${showBranding ? 'open' : ''}`}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ width: '16px', height: '16px', transition: 'transform 0.2s' }}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      {showBranding && (
+                        <div className="accordion-body branding-inputs">
+                          <div className="input-group">
+                            <label>Cabeçalho:</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={slideHeader}
+                              onChange={(e) => setSlideHeader(e.target.value)}
+                              placeholder="Empresa (ex: Marsh McLennan)"
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>Rodapé:</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={slideFooter}
+                              onChange={(e) => setSlideFooter(e.target.value)}
+                              placeholder="Confidencialidade"
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>Autor:</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={slideAuthor}
+                              onChange={(e) => setSlideAuthor(e.target.value)}
+                              placeholder="Autor (ex: Sabrina Barros)"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
+                      <select
+                        className="custom-inst-input"
+                        value={targetSlides}
+                        onChange={(e) => setTargetSlides(Number(e.target.value))}
+                        style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', cursor: 'pointer', backgroundColor: 'var(--color-white)', border: '1px solid #E2E8F0' }}
+                      >
+                        {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(n => (
+                          <option key={n} value={n}>{n} Slides</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="action-buttons-group">
+                      <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
+                        {loading ? 'Analisando...' : 'Analisar Texto'}
+                      </button>
+                      <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
+                        {loading ? 'Gerando...' : 'Gerar Slides'}
+                      </button>
+                      {slides.length > 0 && (
+                        <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
+                          Visualizar Slides
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="editor-container" style={{ display: 'block', overflowY: 'auto', flex: 1, paddingRight: '0.25rem' }}>
+                <div className="wizard-progress">
+                  <div className={`wizard-step-node ${wizardStep === 1 ? 'active' : ''} ${wizardStep > 1 ? 'completed' : ''}`}>
+                    <div className="wizard-step-circle">1</div>
+                    <span className="wizard-step-label">Blueprint</span>
+                  </div>
+                  <div className={`wizard-step-line ${wizardStep > 1 ? 'completed' : ''}`} />
+                  
+                  <div className={`wizard-step-node ${wizardStep === 2 ? 'active' : ''} ${wizardStep > 2 ? 'completed' : ''}`}>
+                    <div className="wizard-step-circle">2</div>
+                    <span className="wizard-step-label">Estrutura</span>
+                  </div>
+                  <div className={`wizard-step-line ${wizardStep > 2 ? 'completed' : ''}`} />
+                  
+                  <div className={`wizard-step-node ${wizardStep === 3 ? 'active' : ''} ${wizardStep > 3 ? 'completed' : ''}`}>
+                    <div className="wizard-step-circle">3</div>
+                    <span className="wizard-step-label">Rascunhos</span>
+                  </div>
+                  <div className={`wizard-step-line ${wizardStep > 3 ? 'completed' : ''}`} />
+                  
+                  <div className={`wizard-step-node ${wizardStep === 4 ? 'active' : ''} ${wizardStep > 4 ? 'completed' : ''}`}>
+                    <div className="wizard-step-circle">4</div>
+                    <span className="wizard-step-label">Design</span>
+                  </div>
+                </div>
+
+                {wizardStep === 1 && (
+                  <div className="branding-inputs">
+                    <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-navy)', marginTop: 0, marginBottom: '1rem' }}>Passo 1: Planejamento & Objetivo</h3>
+                    <div className="input-group">
+                      <label>Tema ou Assunto da Apresentação (Obrigatório):</label>
+                      <input 
+                        type="text" 
+                        className="custom-inst-input" 
+                        placeholder="Ex: RFP de Saúde e Odonto - SHEIN 2026"
+                        value={wizardTopic}
+                        onChange={(e) => setWizardTopic(e.target.value)}
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Público-Alvo:</label>
+                      <input 
+                        type="text" 
+                        className="custom-inst-input" 
+                        placeholder="Ex: Diretoria executiva, Recursos Humanos"
+                        value={wizardAudience}
+                        onChange={(e) => setWizardAudience(e.target.value)}
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Objetivo Principal da Apresentação:</label>
+                      <textarea 
+                        className="custom-inst-input" 
+                        style={{ minHeight: '80px', resize: 'vertical' }}
+                        placeholder="Ex: Demonstrar oportunidades de melhoria no plano atual e propor RFP"
+                        value={wizardGoal}
+                        onChange={(e) => setWizardGoal(e.target.value)}
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Quantidade Estimada de Slides:</label>
+                      <input 
+                        type="number" 
+                        className="custom-inst-input" 
+                        value={wizardTargetSlides}
+                        min="2"
+                        max="20"
+                        onChange={(e) => setWizardTargetSlides(parseInt(e.target.value, 10) || 6)}
+                      />
+                    </div>
+                    <button 
+                      className="btn btn-accent" 
+                      style={{ marginTop: '1.25rem', width: '100%' }} 
+                      onClick={handleGenerateBlueprint}
+                      disabled={loading || !wizardTopic.trim()}
+                    >
+                      {loading ? 'Planejando com IA...' : 'Gerar Blueprint Estratégico'}
+                    </button>
+                  </div>
+                )}
+
+                {wizardStep === 2 && (
+                  <div>
+                    <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-navy)', marginTop: 0, marginBottom: '0.8rem' }}>Passo 2: Roteiro & Fluxo</h3>
+                    {wizardBlueprint && (
+                      <div className="wizard-blueprint-card">
+                        <h4>Diretriz Estratégica</h4>
+                        <p>{wizardBlueprint}</p>
+                      </div>
+                    )}
+                    <div className="outline-list">
+                      {wizardOutline.map((slide, index) => (
+                        <div key={index} className="outline-card">
+                          <div className="outline-card-header">
+                            <span>Slide {index + 1}</span>
+                            <div className="outline-card-actions">
+                              <button 
+                                disabled={index === 0} 
+                                onClick={() => {
+                                  const nextOutline = [...wizardOutline];
+                                  const temp = nextOutline[index];
+                                  nextOutline[index] = nextOutline[index - 1];
+                                  nextOutline[index - 1] = temp;
+                                  setWizardOutline(nextOutline);
+                                }}
+                                title="Mover para cima"
+                              >
+                                ↑
+                              </button>
+                              <button 
+                                disabled={index === wizardOutline.length - 1}
+                                onClick={() => {
+                                  const nextOutline = [...wizardOutline];
+                                  const temp = nextOutline[index];
+                                  nextOutline[index] = nextOutline[index + 1];
+                                  nextOutline[index + 1] = temp;
+                                  setWizardOutline(nextOutline);
+                                }}
+                                title="Mover para baixo"
+                              >
+                                ↓
+                              </button>
+                              <button 
+                                className="btn-delete"
+                                onClick={() => {
+                                  setWizardOutline(wizardOutline.filter((_, i) => i !== index));
+                                }}
+                                title="Excluir slide"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          </div>
+                          <div className="outline-card-body">
+                            <div className="input-row">
+                              <div className="input-group-title">
+                                <input 
+                                  type="text" 
+                                  className="custom-inst-input" 
+                                  placeholder="Título do Slide"
+                                  value={slide.title}
+                                  onChange={(e) => {
+                                    const nextOutline = [...wizardOutline];
+                                    nextOutline[index].title = e.target.value;
+                                    setWizardOutline(nextOutline);
+                                  }}
+                                />
+                              </div>
+                              <div className="input-group-type">
+                                <select 
+                                  className="custom-inst-input"
+                                  value={slide.type}
+                                  onChange={(e) => {
+                                    const nextOutline = [...wizardOutline];
+                                    nextOutline[index].type = e.target.value as 'cover' | 'standard';
+                                    setWizardOutline(nextOutline);
+                                  }}
+                                >
+                                  <option value="standard">Conteúdo</option>
+                                  <option value="cover">Capa</option>
+                                </select>
+                              </div>
+                            </div>
+                            <textarea 
+                              className="custom-inst-input" 
+                              style={{ minHeight: '60px', fontSize: '0.85rem' }}
+                              placeholder="Foco de Conteúdo (ex: 'Diagnóstico de reajuste estimado em 20.6%')"
+                              value={slide.focus}
+                              onChange={(e) => {
+                                      const nextOutline = [...wizardOutline];
+                                      nextOutline[index].focus = e.target.value;
+                                      setWizardOutline(nextOutline);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ width: '100%', marginBottom: '1.25rem' }}
+                      onClick={() => setWizardOutline([...wizardOutline, { title: 'Novo Slide', type: 'standard', focus: '' }])}
+                    >
+                      + Adicionar Slide
+                    </button>
+                    <div style={{ display: 'flex', gap: '0.8rem' }}>
+                      <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setWizardStep(1)}>
+                        Voltar
+                      </button>
+                      <button className="btn btn-accent" style={{ flex: 2 }} onClick={handleGenerateDrafts} disabled={loading || wizardOutline.length === 0}>
+                        {loading ? 'Escrevendo...' : 'Gerar Rascunhos'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {wizardStep === 3 && (
+                  <div>
+                    <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-navy)', marginTop: 0, marginBottom: '1rem' }}>Passo 3: Edição de Rascunhos</h3>
+                    <div className="outline-list">
+                      {wizardDrafts.map((slide, index) => (
+                        <div key={index} className="draft-editor-card">
+                          <div className="draft-editor-card-header">
+                            <h4>Slide {index + 1}: {slide.title}</h4>
+                            <span>{slide.type === 'cover' ? 'Capa' : 'Conteúdo'}</span>
+                          </div>
+                          <textarea 
+                            className="draft-editor-textarea"
+                            value={slide.draft}
+                            onChange={(e) => {
+                              const nextDrafts = [...wizardDrafts];
+                              nextDrafts[index].draft = e.target.value;
+                              setWizardDrafts(nextDrafts);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1.25rem' }}>
+                      <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setWizardStep(2)}>
+                        Voltar
+                      </button>
+                      <button className="btn btn-accent" style={{ flex: 2 }} onClick={handleFinalizeWizardSlides} disabled={loading || wizardDrafts.length === 0}>
+                        {loading ? 'Formatando...' : 'Finalizar Slides'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {wizardStep === 4 && (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0.5rem' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
+                    <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-navy)', marginTop: 0 }}>Apresentação Gerada!</h3>
+                    <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '2rem' }}>
+                      Seus slides foram gerados com o tema Dark Navy Premium e estão prontos para visualização.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <button className="btn btn-accent" onClick={() => setViewMode('slides')}>
+                        Visualizar Apresentação
+                      </button>
+                      <button className="btn btn-secondary" onClick={() => setWizardStep(3)}>
+                        Voltar para Rascunhos
+                      </button>
+                      <button className="btn btn-secondary" onClick={() => {
+                        setWizardStep(1);
+                        setWizardTopic('');
+                        setWizardAudience('');
+                        setWizardGoal('');
+                        setWizardOutline([]);
+                        setWizardDrafts([]);
+                      }}>
+                        Criar Nova Apresentação
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           <section className="panel panel-right">
