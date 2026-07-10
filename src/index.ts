@@ -35,44 +35,50 @@ async function generateCompletion(
 ): Promise<string> {
   // If Anthropic API Key is defined, route to Claude 3.5 Sonnet via Cloudflare AI Gateway!
   if (env.ANTHROPIC_API_KEY && env.AI_GATEWAY_URL) {
-    const gatewayMatch = env.AI_GATEWAY_URL.match(/\/v1\/([^/]+)\/([^/]+)/);
-    if (gatewayMatch) {
-      const accountId = gatewayMatch[1];
-      const gatewayId = gatewayMatch[2];
-      const url = `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/anthropic/v1/messages`;
-      
-      const systemMsg = messages.find(m => m.role === 'system')?.content || '';
-      const userMsgs = messages.filter(m => m.role !== 'system').map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content
-      }));
+    let cleanGatewayUrl = env.AI_GATEWAY_URL.trim();
+    if (cleanGatewayUrl.endsWith('/')) {
+      cleanGatewayUrl = cleanGatewayUrl.slice(0, -1);
+    }
+    
+    let url = '';
+    if (cleanGatewayUrl.includes('/anthropic')) {
+      const base = cleanGatewayUrl.split('/anthropic')[0];
+      url = `${base}/anthropic/v1/messages`;
+    } else {
+      url = `${cleanGatewayUrl}/anthropic/v1/messages`;
+    }
 
-      try {
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers: {
-            'x-api-key': env.ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            system: systemMsg,
-            messages: userMsgs,
-            max_tokens: maxTokens
-          })
-        }, 15000);
-        
-        if (response.ok) {
-          const data: any = await response.json();
-          const content = data?.content?.[0]?.text;
-          if (content) return content;
-        } else {
-          console.warn(`Claude routing via AI Gateway returned status ${response.status}: ${await response.text()}`);
-        }
-      } catch (e) {
-        console.error('Claude routing via AI Gateway failed:', e);
+    const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+    const userMsgs = messages.filter(m => m.role !== 'system').map(m => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content
+    }));
+
+    try {
+      const response = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'x-api-key': env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          system: systemMsg,
+          messages: userMsgs,
+          max_tokens: maxTokens
+        })
+      }, 15000);
+      
+      if (response.ok) {
+        const data: any = await response.json();
+        const content = data?.content?.[0]?.text;
+        if (content) return content;
+      } else {
+        console.warn(`Claude routing via AI Gateway returned status ${response.status}: ${await response.text()}`);
       }
+    } catch (e) {
+      console.error('Claude routing via AI Gateway failed:', e);
     }
   }
 
@@ -203,6 +209,29 @@ app.use('/api/*', async (c, next) => {
     return c.json({ error: 'Não autorizado. Token de acesso inválido.' }, 401);
   }
   await next();
+});
+
+app.get('/api/debug-env', (c) => {
+  const keys = Object.keys(c.env);
+  const info: Record<string, any> = {};
+  keys.forEach(k => {
+    const val = (c.env as any)[k];
+    if (typeof val === 'string') {
+      info[k] = {
+        type: 'string',
+        length: val.length,
+        prefix: val.length > 8 ? val.substring(0, 8) + '...' : '...'
+      };
+    } else if (val && typeof val === 'object') {
+      info[k] = {
+        type: 'object',
+        keys: Object.keys(val)
+      };
+    } else {
+      info[k] = { type: typeof val };
+    }
+  });
+  return c.json({ keys, info });
 });
 
 const MAX_TEXT_LENGTH = 20000;
