@@ -84,6 +84,42 @@ export default function App() {
     });
   };
 
+  const handleAnalyzeAndGenerate = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Run Critique / Analysis
+      const critiqueRes = await callCritique(text, selectedSkills, customInstructions);
+      setCritique(critiqueRes.critique);
+      setImprovedText(critiqueRes.improvedText);
+
+      // Determine text to generate from (use improved version if available, otherwise original text)
+      const textToGenerate = critiqueRes.improvedText && critiqueRes.improvedText.trim() 
+        ? critiqueRes.improvedText 
+        : text;
+
+      // 2. Generate Slides
+      const generateRes = await callGenerateSlides(textToGenerate, targetSlides);
+      setSlidesMarkdown(generateRes.slidesMarkdown);
+      const parsed = parseSlides(generateRes.slidesMarkdown);
+      setSlides(parsed);
+      setCurrentSlideIndex(0);
+      setViewMode('slides');
+    } catch (err) {
+      console.error(err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('Não autorizado') || errMsg.includes('token') || errMsg.includes('401')) {
+        localStorage.removeItem('piripres_auth_token');
+        setIsAuthenticated(false);
+        setLoginError('Sessão expirada ou Token de acesso inválido.');
+      } else {
+        setError(errMsg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     setLoading(true);
     setError('');
@@ -826,16 +862,45 @@ export default function App() {
                         ))}
                       </select>
                     </div>
-                    <div className="action-buttons-group">
-                      <button className="btn" onClick={handleAnalyze} disabled={loading || !text}>
-                        {loading ? 'Analisando...' : 'Analisar Texto'}
+                    <div className="action-buttons-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <button 
+                        className="btn btn-accent" 
+                        onClick={handleAnalyzeAndGenerate} 
+                        disabled={loading || !text}
+                        style={{ padding: '0.8rem 1rem', fontSize: '1rem', fontWeight: '600', width: '100%' }}
+                      >
+                        {loading ? 'Analisando e Criando Slides...' : 'Analisar e Criar Slides'}
                       </button>
-                      <button className="btn btn-accent" onClick={handleGenerateSlides} disabled={loading || !text}>
-                        {loading ? 'Gerando...' : 'Gerar Slides'}
-                      </button>
+                      
+                      <div style={{ display: 'flex', gap: '0.6rem', width: '100%' }}>
+                        <button 
+                          className="btn" 
+                          onClick={handleAnalyze} 
+                          disabled={loading || !text}
+                          style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }}
+                          title="Executar apenas a análise crítica e sugestão de melhorias"
+                        >
+                          Apenas Analisar
+                        </button>
+                        <button 
+                          className="btn" 
+                          onClick={handleGenerateSlides} 
+                          disabled={loading || !text}
+                          style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }}
+                          title="Gerar slides diretamente com o texto atual"
+                        >
+                          Apenas Gerar
+                        </button>
+                      </div>
+                      
                       {slides.length > 0 && (
-                        <button className="btn" onClick={() => setViewMode('slides')} disabled={loading}>
-                          Visualizar Slides
+                        <button 
+                          className="btn" 
+                          onClick={() => setViewMode('slides')} 
+                          disabled={loading}
+                          style={{ width: '100%' }}
+                        >
+                          Visualizar Apresentação
                         </button>
                       )}
                     </div>
