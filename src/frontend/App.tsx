@@ -11,6 +11,7 @@ interface SlideData {
   contentHtml: string;
   isCover: boolean;
   isTable: boolean;
+  isCta?: boolean;
 }
 
 export default function App() {
@@ -236,7 +237,8 @@ export default function App() {
       });
       if (insideList) contentHtml += '</ul>';
       if (insideTable) contentHtml += '</div>';
-      return { title, contentHtml: sanitizeSlideHtml(contentHtml), isCover, isTable };
+      const isCta = index === parts.length - 1 && parts.length > 1;
+      return { title, contentHtml: sanitizeSlideHtml(contentHtml), isCover, isTable, isCta };
     }).filter(s => s.contentHtml || s.title);
   };
 
@@ -262,6 +264,7 @@ export default function App() {
       }
 
       const isCover = type === 'cover';
+      const isCta = type === 'cta';
       const isTable = content.includes('|') && content.includes('-|-');
 
       let contentHtml = '';
@@ -324,7 +327,8 @@ export default function App() {
         title,
         contentHtml: sanitizeSlideHtml(contentHtml),
         isCover,
-        isTable
+        isTable,
+        isCta
       });
     }
 
@@ -478,8 +482,16 @@ export default function App() {
         text-align: center;
         padding: 3rem;
       }
+      .slide.cta {
+        background: var(--color-navy);
+        color: var(--color-white);
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 3rem;
+      }
       .slide-title { font-size: 2.1rem; margin-top: 0; font-family: var(--font-heading); color: var(--color-white); }
-      .slide.cover .slide-title { font-size: 2.6rem; color: var(--color-white); }
+      .slide.cover .slide-title, .slide.cta .slide-title { font-size: 2.5rem; color: var(--color-white); border-bottom: none; }
       .slide.standard .slide-title { border-bottom: 2px solid var(--color-teal); padding-bottom: 0.5rem; }
       .slide-line { width: 120px; height: 3px; background: var(--color-teal); margin: 1.25rem auto; border-radius: 2px; }
       .slide-content { font-size: 1.15rem; line-height: 1.7; margin-top: 1.5rem; }
@@ -509,7 +521,7 @@ export default function App() {
       .slide-header { position: absolute; top: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: flex-end; font-size: 0.8rem; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; font-weight: 600; }
       .slide-footer { position: absolute; bottom: 1.25rem; left: 4rem; right: 4rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: rgba(255, 255, 255, 0.45); }
       .slide-footer .slide-number { font-weight: 600; background: rgba(0, 163, 166, 0.06); color: var(--color-teal); padding: 0.2rem 0.5rem; border-radius: 4px; }
-      .slide.cover .slide-author { margin-top: 1.5rem; font-size: 1rem; color: rgba(255,255,255,0.7); font-weight: 500; text-align: center; font-family: var(--font-body); letter-spacing: 0.02em; }2em; }
+      .slide.cover .slide-author { margin-top: 1.5rem; font-size: 1rem; color: rgba(255,255,255,0.7); font-weight: 500; text-align: center; font-family: var(--font-body); letter-spacing: 0.02em; }
 
       @media print {
         body { background: white; }
@@ -518,8 +530,8 @@ export default function App() {
     `;
 
     const slidesHtml = slides.map((slide, index) => `
-      <div class="slide ${slide.isCover ? 'cover' : 'standard'}">
-        ${!slide.isCover ? `
+      <div class="slide ${slide.isCover ? 'cover' : (slide.isCta ? 'cta' : 'standard')}">
+        ${!(slide.isCover || slide.isCta) ? `
           <div class="slide-header">
             <span class="slide-brand">${escapeHtml(slideHeader)}</span>
           </div>
@@ -527,13 +539,13 @@ export default function App() {
         <h2 class="slide-title">${escapeHtml(slide.title)}</h2>
         ${slide.isCover ? '<div class="slide-line"></div>' : ''}
         <div class="slide-content">${slide.contentHtml}</div>
-        ${!slide.isCover ? `
+        ${!(slide.isCover || slide.isCta) ? `
           <div class="slide-footer">
             <span class="slide-confidential">${escapeHtml(slideFooter)}</span>
             <span class="slide-number">${index + 1}</span>
           </div>
         ` : `
-          ${slideAuthor ? `
+          ${slide.isCover && slideAuthor ? `
             <div class="slide-author">
               Elaborado por: ${escapeHtml(slideAuthor)}
             </div>
@@ -576,7 +588,7 @@ export default function App() {
       <div className="login-wrapper">
         <div className="login-card">
           <div className="login-header">
-            <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img logo-lg" />
+            <img src="/logo.svg" alt="PiriPres Logo" className="piripres-logo-img logo-lg" />
             <h1 className="login-title">Piri<span className="text-teal">Pres</span></h1>
             <p className="login-subtitle">PiriOffice</p>
           </div>
@@ -621,7 +633,7 @@ export default function App() {
         <header className="header">
           <div className="header-branding">
             <div className="logo-brand-group">
-              <img src="/favicon.png" alt="PiriPres Logo" className="piripres-logo-img" />
+              <img src="/logo.svg" alt="PiriPres Logo" className="piripres-logo-img" />
               <div className="brand-divider"></div>
               <div className="header-title-group">
                 <span className="header-title-main">Piri<span className="text-teal">Pres</span></span>
@@ -1153,8 +1165,8 @@ export default function App() {
         <main className="slideshow-view">
           <div className="slide-frame">
             {slides.length > 0 && (
-              <div className={`slide-layout ${slides[currentSlideIndex].isCover ? 'cover' : 'standard'}`}>
-                {!slides[currentSlideIndex].isCover && (
+              <div className={`slide-layout ${slides[currentSlideIndex].isCover ? 'cover' : (slides[currentSlideIndex].isCta ? 'cta' : 'standard')}`}>
+                {!(slides[currentSlideIndex].isCover || slides[currentSlideIndex].isCta) && (
                   <div className="slide-header">
                     <span className="slide-brand">{slideHeader}</span>
                   </div>
@@ -1165,13 +1177,13 @@ export default function App() {
                   className="slide-content"
                   dangerouslySetInnerHTML={{ __html: slides[currentSlideIndex].contentHtml }}
                 />
-                {!slides[currentSlideIndex].isCover ? (
+                {!(slides[currentSlideIndex].isCover || slides[currentSlideIndex].isCta) ? (
                   <div className="slide-footer">
                     <span className="slide-confidential">{slideFooter}</span>
                     <span className="slide-number">{currentSlideIndex + 1}</span>
                   </div>
                 ) : (
-                  slideAuthor && (
+                  slides[currentSlideIndex].isCover && slideAuthor && (
                     <div className="slide-author">
                       Elaborado por: {slideAuthor}
                     </div>
@@ -1212,8 +1224,8 @@ export default function App() {
     </div>
     <div className="print-container">
       {slides.map((slide, index) => (
-        <div key={index} className={`slide-page slide-layout ${slide.isCover ? 'cover' : 'standard'}`}>
-          {!slide.isCover && (
+        <div key={index} className={`slide-page slide-layout ${slide.isCover ? 'cover' : (slide.isCta ? 'cta' : 'standard')}`}>
+          {!(slide.isCover || slide.isCta) && (
             <div className="slide-header">
               <span className="slide-brand">{slideHeader}</span>
             </div>
@@ -1224,13 +1236,13 @@ export default function App() {
             className="slide-content"
             dangerouslySetInnerHTML={{ __html: slide.contentHtml }}
           />
-          {!slide.isCover ? (
+          {!(slide.isCover || slide.isCta) ? (
             <div className="slide-footer">
               <span className="slide-confidential">{slideFooter}</span>
               <span className="slide-number">{index + 1}</span>
             </div>
           ) : (
-            slideAuthor && (
+            slide.isCover && slideAuthor && (
               <div className="slide-author">
                 Elaborado por: {slideAuthor}
               </div>

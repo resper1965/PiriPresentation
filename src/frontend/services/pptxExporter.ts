@@ -4,6 +4,8 @@ interface SlideData {
   title: string;
   contentHtml: string;
   isCover: boolean;
+  isTable?: boolean;
+  isCta?: boolean;
 }
 
 export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter = '', slideAuthor = '', filename = 'Apresentacao.pptx') {
@@ -50,6 +52,64 @@ export function exportToPPTX(slides: SlideData[], slideHeader = '', slideFooter 
           h: 0.4,
           fontSize: 14,
           color: 'A0AEC0',
+          fontFace: 'Arial',
+          align: 'center'
+        });
+      }
+    } else if (slide.isCta) {
+      // CTA Slide: Navy Background (#003B70)
+      pptSlide.background = { fill: '003B70' };
+
+      // Title (centered)
+      pptSlide.addText(slide.title, {
+        x: 1.0,
+        y: 1.6,
+        w: 8.0,
+        h: 1.0,
+        fontSize: 34,
+        bold: true,
+        color: 'FFFFFF',
+        fontFace: 'Georgia',
+        align: 'center'
+      });
+
+      // Decorative line
+      pptSlide.addShape(pptx.ShapeType.rect, {
+        x: 4.0,
+        y: 2.8,
+        w: 2.0,
+        h: 0.05,
+        fill: { color: '00A3A6' }
+      });
+
+      // Extract list items or text from contentHtml
+      const matchBullets = slide.contentHtml.match(/<li>(.*?)<\/li>/gi);
+      if (matchBullets && matchBullets.length > 0) {
+        const bullets = matchBullets.map(li => {
+          const cleanText = li.replace(/<\/?[^>]+(>|$)/g, "").trim();
+          return { text: cleanText };
+        });
+        pptSlide.addText(bullets, {
+          x: 1.5,
+          y: 3.2,
+          w: 7.0,
+          h: 2.5,
+          fontSize: 16,
+          color: 'F8FAFC',
+          fontFace: 'Arial',
+          align: 'center',
+          bullet: true,
+          lineSpacing: 26
+        });
+      } else {
+        const cleanText = slide.contentHtml.replace(/<\/?[^>]+(>|$)/g, "").trim();
+        pptSlide.addText(cleanText, {
+          x: 1.5,
+          y: 3.2,
+          w: 7.0,
+          h: 2.5,
+          fontSize: 16,
+          color: 'F8FAFC',
           fontFace: 'Arial',
           align: 'center'
         });

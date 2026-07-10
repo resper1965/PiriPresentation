@@ -249,7 +249,7 @@ function safeJsonParse(text: string): { critique?: unknown; improvedText?: unkno
 
 interface SlideOutlineItem {
   title: string;
-  type: 'cover' | 'standard';
+  type: 'cover' | 'standard' | 'cta';
   focus: string;
 }
 
@@ -351,7 +351,7 @@ app.post('/api/generate', async (c) => {
     const hasSlideMarkers = /(?:^|\r?\n)Slide\s*\d+\s*[:\-]/i.test(safeText);
     const hasSeparators = safeText.includes('\n---') || safeText.includes('\r\n---');
     const isPreStructured = hasSlideMarkers || hasSeparators;
-    let outline: { title: string; type: 'cover' | 'standard'; focus: string }[] = [];
+    let outline: { title: string; type: 'cover' | 'standard' | 'cta'; focus: string }[] = [];
 
     if (hasSlideMarkers) {
       // Parse using the Slide X: Regex pattern
@@ -375,7 +375,7 @@ app.post('/api/generate', async (c) => {
         
         return {
           title,
-          type: index === 0 ? 'cover' as const : 'standard' as const,
+          type: index === 0 ? 'cover' as const : (index === matches.length - 1 ? 'cta' as const : 'standard' as const),
           focus: `# ${title}\n${focus}`
         };
       });
@@ -396,7 +396,7 @@ app.post('/api/generate', async (c) => {
         }
         return {
           title,
-          type: index === 0 ? 'cover' as const : 'standard' as const,
+          type: index === 0 ? 'cover' as const : (index === fragments.length - 1 ? 'cta' as const : 'standard' as const),
           focus: fragment
         };
       });
@@ -405,7 +405,7 @@ app.post('/api/generate', async (c) => {
       const planPrompt = `Você é um planejador de apresentações sênior. Sua tarefa é analisar o texto de entrada na tag <user_text> e dividi-lo em um plano estratégico de exatamente ${targetSlides} slides.
 Retorne APENAS um array JSON contendo objetos com as chaves:
 - "title": o título do slide (em português)
-- "type": "cover" para o primeiro slide, e "standard" para os slides seguintes
+- "type": "cover" para o primeiro slide, "cta" para o último slide, e "standard" para os slides intermediários
 - "focus": descrição resumida do foco de conteúdo a ser abordado nesse slide específico.
 
 Não inclua explicações, introdução ou notas fora do JSON. Responda apenas com o JSON bruto.
@@ -437,7 +437,7 @@ ${safeText}
       }
       outline = parsedOutline.map(item => ({
         title: typeof item.title === 'string' ? item.title : 'Slide',
-        type: item.type === 'cover' ? 'cover' as const : 'standard' as const,
+        type: item.type === 'cover' ? 'cover' as const : (item.type === 'cta' ? 'cta' as const : 'standard' as const),
         focus: typeof item.focus === 'string' ? item.focus : ''
       }));
     }
@@ -460,6 +460,7 @@ Instruções importantes:
 - IMPORTANTE: Se o rascunho contiver no final seções gerais de texto corrido (como "Texto Consolidado do Diagnóstico", "Texto Consolidado", ou explicações finais da apresentação), ignore-as completamente e não as incorpore ao slide. Foque exclusivamente nos tópicos específicos relativos a este slide.
 - Retorne o slide encapsulado na tag XML: <slide type="${slide.type}"> ... </slide>.
 - Se type for "cover", crie a capa da apresentação contendo apenas o título principal em Markdown (# Título) e o subtítulo (## Subtítulo). Não use tabelas ou colunas na capa.
+- Se type for "cta", crie um slide de Call to Action (encerramento/conclusão). Comece com o título do slide (# Título do Slide), inclua uma mensagem de encerramento em um parágrafo ou callout-box, e adicione uma lista simples com os próximos passos recomendados.
 - Se type for "standard", comece com o título do slide (# Título do Slide) e use pelo menos uma estrutura visual do nosso HTML toolkit (grids de colunas, caixas de callout, tabelas markdown ou métricas de destaque) para organizar as informações de forma executiva.
 - Certifique-se de respeitar a REGRA DE CONTRASTE: nunca use a cor Accent Teal (#00A3A6) para textos normais ou parágrafos, apenas para números gigantes de métricas (metric-val) ou elements decorativos.
 - Não escreva nenhuma introdução, notas explicativas ou tags fora de <slide> e </slide>.`;
@@ -474,6 +475,7 @@ Instruções importantes:
 - Baseie-se estritamente nas informações relevantes do texto de origem em <user_text>.
 - Retorne o slide encapsulado na tag XML: <slide type="${slide.type}"> ... </slide>.
 - Se type for "cover", crie a capa da apresentação contendo apenas o título principal em Markdown (# Título) e o subtítulo (## Subtítulo). Não use tabelas ou colunas na capa.
+- Se type for "cta", crie um slide de Call to Action (encerramento/conclusão). Comece com o título do slide (# Título do Slide), inclua uma mensagem de encerramento em um parágrafo ou callout-box, e adicione uma lista simples com os próximos passos recomendados.
 - Se type for "standard", comece com o título do slide (# Título do Slide) e use pelo menos uma estrutura visual do nosso HTML toolkit (grids de colunas, caixas de callout, tabelas markdown ou métricas de destaque).
 - Não escreva nenhuma introdução, notas explicativas ou tags fora de <slide> e </slide>.
 

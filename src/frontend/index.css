@@ -84,7 +84,6 @@ body {
   width: 63px;
   height: 63px;
   object-fit: contain;
-  mix-blend-mode: screen;
 }
 
 .header-title-group {
@@ -1377,4 +1376,73 @@ textarea {
   outline: none;
   border-color: var(--color-navy);
   box-shadow: 0 0 0 3px rgba(0, 59, 112, 0.08);
+}
+
+/* Call to Action (CTA) Slide Styling */
+.slide-layout.cta {
+  background-color: var(--color-navy);
+  color: var(--color-white);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+}
+
+.slide-layout.cta .slide-title {
+  font-size: 2.3rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--color-white);
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.slide-layout.cta .slide-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  width: 100%;
+  margin-top: 0;
+}
+
+.slide-layout.cta .callout-box {
+  background: rgba(0, 163, 166, 0.12);
+  border-left: 4px solid var(--color-teal);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.slide-layout.cta ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+  align-items: center;
+}
+
+.slide-layout.cta li {
+  font-size: 1.15rem;
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.6rem 1.5rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Stem of P -->
+  <path d="M 26 22 V 78" stroke="#00A3A6" stroke-width="11" stroke-linecap="round" />
+  <!-- Loop of P -->
+  <path d="M 26 22 H 52 C 67 22 67 50 52 50 H 26" stroke="#00A3A6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Circle of O -->
+  <circle cx="62" cy="61" r="17" stroke="#00A3A6" stroke-width="11" />
+</svg>
