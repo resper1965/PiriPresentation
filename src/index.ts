@@ -33,8 +33,8 @@ async function generateCompletion(
   messages: any[],
   maxTokens: number
 ): Promise<string> {
-  // If Anthropic API Key is defined, route to Claude 3.5 Sonnet via Cloudflare AI Gateway!
-  if (env.ANTHROPIC_API_KEY && env.AI_GATEWAY_URL) {
+  // Route to Claude 3.5 Sonnet via Cloudflare AI Gateway (managed or explicit credentials)
+  if (env.AI_GATEWAY_URL) {
     let cleanGatewayUrl = env.AI_GATEWAY_URL.trim();
     if (cleanGatewayUrl.endsWith('/')) {
       cleanGatewayUrl = cleanGatewayUrl.slice(0, -1);
@@ -55,13 +55,22 @@ async function generateCompletion(
     }));
 
     try {
+      const headers: Record<string, string> = {
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      };
+
+      if (env.ANTHROPIC_API_KEY) {
+        headers['x-api-key'] = env.ANTHROPIC_API_KEY;
+      }
+
+      if (env.AI_GATEWAY_TOKEN) {
+        headers['Authorization'] = `Bearer ${env.AI_GATEWAY_TOKEN}`;
+      }
+
       const response = await fetchWithTimeout(url, {
         method: 'POST',
-        headers: {
-          'x-api-key': env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
           system: systemMsg,
@@ -177,6 +186,19 @@ async function generateCompletion(
     }
   }
   return String(result || '');
+}
+
+function getActiveEnv(c: any): Bindings {
+  const customGatewayUrl = c.req.header('x-ai-gateway-url');
+  const customGatewayToken = c.req.header('x-ai-gateway-token');
+  const customAnthropicKey = c.req.header('x-anthropic-api-key');
+
+  return {
+    ...c.env,
+    AI_GATEWAY_URL: customGatewayUrl || c.env.AI_GATEWAY_URL,
+    AI_GATEWAY_TOKEN: customGatewayToken || c.env.AI_GATEWAY_TOKEN,
+    ANTHROPIC_API_KEY: customAnthropicKey || c.env.ANTHROPIC_API_KEY,
+  };
 }
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -342,7 +364,7 @@ app.post('/api/critique', async (c) => {
 
   try {
     const content = await generateCompletion(
-      c.env,
+      getActiveEnv(c),
       '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
       '@cf/meta/llama-3.1-8b-instruct-fp8',
       [
@@ -444,7 +466,7 @@ ${safeText}
 </user_text>`;
 
       const planContent = await generateCompletion(
-        c.env,
+        getActiveEnv(c),
         '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         '@cf/meta/llama-3.1-8b-instruct-fp8',
         [
@@ -516,7 +538,7 @@ ${safeText}
       const systemContent = `Você é um designer de apresentações sênior (estilo McKinsey/BCG). Sua missão é transformar o plano de conteúdo fornecido em um slide executivo de altíssima fidelidade.\n\nRegras de estruturação e ACESSIBILIDADE DE COR:\n- REGRA DE CONTRASTE: Nunca use a cor Accent Teal (#00A3A6) para textos normais, descrições, tabelas ou parágrafos. O Teal possui baixo contraste sobre o fundo Warm Cream e deve ser utilizado exclusivamente para números gigantes em realces de métricas (metric-val) ou linhas horizontais decorativas. Textos normais de parágrafo ou listas devem ser escritos em cores de alto contraste.\n\nRegras do HTML toolkit a serem usadas em slides "standard":\n- Grid de duas colunas:\n  <div class="grid-2-cols">\n    <div class="card">\n      <h3>Título A</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n    <div class="card">\n      <h3>Título B</h3>\n      - Tópico 1\n      - Tópico 2\n    </div>\n  </div>\n- Grid de três colunas:\n  <div class="grid-3-cols">\n    <div class="card">...</div>\n    <div class="card">...</div>\n    <div class="card">...</div>\n  </div>\n- Destacar números/métricas gigantes:\n  <div class="metric-highlight">\n    <div class="metric-val">94.2%</div>\n    <div class="metric-lbl">Taxa de Conversão</div>\n  </div>\n- Caixa de recomendação (Callout):\n  <div class="callout-box">Recomendação estratégica importante aqui...</div>\n- Tabelas: Use a sintaxe de tabelas markdown padrão.\n\nExemplo de saída esperada para um slide standard:\n<slide type="standard">\n# Desempenho Operacional Q2\n<div class="metric-highlight">\n  <div class="metric-val">83.5%</div>\n  <div class="metric-lbl">Sinistralidade Operacional</div>\n</div>\n<div class="grid-2-cols">\n  <div class="card">\n    <h3>Pontos de Destaque</h3>\n    - Redução de custos administrativos\n  </div>\n  <div class="card">\n    <h3>Gargalos</h3>\n    - Aumento na sinistralidade YoY\n  </div>\n</div>\n</slide>`;
 
       return generateCompletion(
-        c.env,
+        getActiveEnv(c),
         '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         '@cf/meta/llama-3.1-8b-instruct-fp8',
         [
@@ -571,7 +593,7 @@ Responda APENAS com o JSON válido. Não envie introduções, explicações ou n
 
   try {
     const aiContent = await generateCompletion(
-      c.env,
+      getActiveEnv(c),
       '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
       '@cf/meta/llama-3.1-8b-instruct-fp8',
       [
@@ -641,7 +663,7 @@ Instruções:
 - Responda apenas com o texto cru do slide, sem introduções, títulos adicionais ou observações.`;
 
       const draftContent = await generateCompletion(
-        c.env,
+        getActiveEnv(c),
         '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         '@cf/meta/llama-3.1-8b-instruct-fp8',
         [

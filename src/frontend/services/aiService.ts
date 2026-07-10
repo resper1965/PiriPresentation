@@ -23,6 +23,17 @@ const getAuthToken = (): string => {
   return localStorage.getItem('piripres_auth_token') || 'piri2026@!';
 };
 
+const getGatewayHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {};
+  const url = localStorage.getItem('piripres_ai_gateway_url');
+  const token = localStorage.getItem('piripres_ai_gateway_token');
+  const key = localStorage.getItem('piripres_anthropic_api_key');
+  if (url) headers['x-ai-gateway-url'] = url;
+  if (token) headers['x-ai-gateway-token'] = token;
+  if (key) headers['x-anthropic-api-key'] = key;
+  return headers;
+};
+
 export async function callCritique(
   text: string,
   skills: string[],
@@ -32,7 +43,8 @@ export async function callCritique(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${getAuthToken()}`,
+      ...getGatewayHeaders()
     },
     body: JSON.stringify({ text, skills, customInstructions })
   });
@@ -44,7 +56,8 @@ export async function callGenerateSlides(text: string, targetSlides: number): Pr
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${getAuthToken()}`,
+      ...getGatewayHeaders()
     },
     body: JSON.stringify({ text, targetSlides })
   });
@@ -70,7 +83,8 @@ export async function callWizardBlueprint(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${getAuthToken()}`,
+      ...getGatewayHeaders()
     },
     body: JSON.stringify({ topic, audience, goal, targetSlides })
   });
@@ -88,7 +102,8 @@ export async function callWizardDraft(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${getAuthToken()}`,
+      ...getGatewayHeaders()
     },
     body: JSON.stringify({ outline, blueprint, topic, audience, goal })
   });

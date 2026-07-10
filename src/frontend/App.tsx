@@ -40,6 +40,37 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
   const [showBranding, setShowBranding] = useState(false);
+  const [aiGatewayUrl, setAiGatewayUrl] = useState(() => localStorage.getItem('piripres_ai_gateway_url') || '');
+  const [aiGatewayToken, setAiGatewayToken] = useState(() => localStorage.getItem('piripres_ai_gateway_token') || '');
+  const [anthropicApiKey, setAnthropicApiKey] = useState(() => localStorage.getItem('piripres_anthropic_api_key') || '');
+  const [showAiConfig, setShowAiConfig] = useState(false);
+
+  const handleGatewayUrlChange = (val: string) => {
+    setAiGatewayUrl(val);
+    if (val) {
+      localStorage.setItem('piripres_ai_gateway_url', val);
+    } else {
+      localStorage.removeItem('piripres_ai_gateway_url');
+    }
+  };
+
+  const handleGatewayTokenChange = (val: string) => {
+    setAiGatewayToken(val);
+    if (val) {
+      localStorage.setItem('piripres_ai_gateway_token', val);
+    } else {
+      localStorage.removeItem('piripres_ai_gateway_token');
+    }
+  };
+
+  const handleApiKeyChange = (val: string) => {
+    setAnthropicApiKey(val);
+    if (val) {
+      localStorage.setItem('piripres_anthropic_api_key', val);
+    } else {
+      localStorage.removeItem('piripres_anthropic_api_key');
+    }
+  };
 
   // Wizard Mode States
   const [creatorMode, setCreatorMode] = useState<'direct' | 'wizard'>('direct');
@@ -700,7 +731,9 @@ export default function App() {
                 <span className="header-subtitle">PiriOffice</span>
               </div>
             </div>
-            <span className="header-badge">Workers AI Active</span>
+            <span className={`header-badge ${aiGatewayUrl ? 'badge-claude' : ''}`}>
+              {aiGatewayUrl ? 'Claude 3.5 Sonnet Active' : 'Workers AI Active'}
+            </span>
           </div>
           <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             {viewMode === 'slides' && (
@@ -873,6 +906,66 @@ export default function App() {
                         </div>
                       )}
                     </div>
+                    
+                    <div className="accordion-wrapper" style={{ marginTop: '0.75rem', marginBottom: '1.25rem' }}>
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => setShowAiConfig(!showAiConfig)}
+                      >
+                        <span>Conexão IA & AI Gateway</span>
+                        <svg
+                          className={`accordion-chevron ${showAiConfig ? 'open' : ''}`}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ width: '16px', height: '16px', transition: 'transform 0.2s' }}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      {showAiConfig && (
+                        <div className="accordion-body branding-inputs">
+                          <div className="input-group">
+                            <label>AI Gateway URL:</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={aiGatewayUrl}
+                              onChange={(e) => handleGatewayUrlChange(e.target.value)}
+                              placeholder="https://gateway.ai.cloudflare.com/v1/..."
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '0.1rem' }}>
+                              URL do AI Gateway da Cloudflare para rotear requisições.
+                            </span>
+                          </div>
+                          <div className="input-group">
+                            <label>AI Gateway Token (Opcional):</label>
+                            <input
+                              type="password"
+                              className="custom-inst-input"
+                              value={aiGatewayToken}
+                              onChange={(e) => handleGatewayTokenChange(e.target.value)}
+                              placeholder="Token de autorização do Gateway se ativo"
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>Anthropic API Key (Opcional):</label>
+                            <input
+                              type="password"
+                              className="custom-inst-input"
+                              value={anthropicApiKey}
+                              onChange={(e) => handleApiKeyChange(e.target.value)}
+                              placeholder="Chave sk-ant-... se não gerenciada pelo Gateway"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="slides-count-container" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-dark)' }}>Quantidade de Slides Target:</label>
                       <select
@@ -1002,6 +1095,63 @@ export default function App() {
                         onChange={(e) => setWizardTargetSlides(parseInt(e.target.value, 10) || 6)}
                       />
                     </div>
+                    
+                    <div className="accordion-wrapper" style={{ marginTop: '0.75rem', marginBottom: '0.75rem' }}>
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => setShowAiConfig(!showAiConfig)}
+                      >
+                        <span>Conexão IA & AI Gateway</span>
+                        <svg
+                          className={`accordion-chevron ${showAiConfig ? 'open' : ''}`}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ width: '16px', height: '16px', transition: 'transform 0.2s' }}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      {showAiConfig && (
+                        <div className="accordion-body branding-inputs">
+                          <div className="input-group">
+                            <label>AI Gateway URL:</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={aiGatewayUrl}
+                              onChange={(e) => handleGatewayUrlChange(e.target.value)}
+                              placeholder="https://gateway.ai.cloudflare.com/v1/..."
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>AI Gateway Token (Opcional):</label>
+                            <input
+                              type="password"
+                              className="custom-inst-input"
+                              value={aiGatewayToken}
+                              onChange={(e) => handleGatewayTokenChange(e.target.value)}
+                              placeholder="Token de autorização do Gateway se ativo"
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>Anthropic API Key (Opcional):</label>
+                            <input
+                              type="password"
+                              className="custom-inst-input"
+                              value={anthropicApiKey}
+                              onChange={(e) => handleApiKeyChange(e.target.value)}
+                              placeholder="Chave sk-ant-... se não gerenciada pelo Gateway"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <button 
                       className="btn btn-accent" 
                       style={{ marginTop: '1.25rem', width: '100%' }} 
