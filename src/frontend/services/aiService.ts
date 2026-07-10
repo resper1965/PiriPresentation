@@ -28,9 +28,11 @@ const getGatewayHeaders = (): Record<string, string> => {
   const url = localStorage.getItem('piripres_ai_gateway_url');
   const token = localStorage.getItem('piripres_ai_gateway_token');
   const key = localStorage.getItem('piripres_anthropic_api_key');
+  const model = localStorage.getItem('piripres_ai_gateway_model') || 'claude-3-5-sonnet-20241022';
   if (url) headers['x-ai-gateway-url'] = url;
   if (token) headers['x-ai-gateway-token'] = token;
   if (key) headers['x-anthropic-api-key'] = key;
+  if (model) headers['x-ai-gateway-model'] = model;
   return headers;
 };
 

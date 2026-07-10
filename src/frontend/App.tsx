@@ -42,8 +42,18 @@ export default function App() {
   const [showBranding, setShowBranding] = useState(false);
   const [aiGatewayUrl, setAiGatewayUrl] = useState(() => localStorage.getItem('piripres_ai_gateway_url') || '');
   const [aiGatewayToken, setAiGatewayToken] = useState(() => localStorage.getItem('piripres_ai_gateway_token') || '');
+  const [aiGatewayModel, setAiGatewayModel] = useState(() => localStorage.getItem('piripres_ai_gateway_model') || 'claude-3-5-sonnet-20241022');
   const [anthropicApiKey, setAnthropicApiKey] = useState(() => localStorage.getItem('piripres_anthropic_api_key') || '');
   const [showAiConfig, setShowAiConfig] = useState(false);
+
+  const handleGatewayModelChange = (val: string) => {
+    setAiGatewayModel(val);
+    if (val) {
+      localStorage.setItem('piripres_ai_gateway_model', val);
+    } else {
+      localStorage.removeItem('piripres_ai_gateway_model');
+    }
+  };
 
   const handleGatewayUrlChange = (val: string) => {
     setAiGatewayUrl(val);
@@ -953,6 +963,16 @@ export default function App() {
                             />
                           </div>
                           <div className="input-group">
+                            <label>Modelo Anthropic (Opcional):</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={aiGatewayModel}
+                              onChange={(e) => handleGatewayModelChange(e.target.value)}
+                              placeholder="claude-3-5-sonnet-20241022"
+                            />
+                          </div>
+                          <div className="input-group">
                             <label>Anthropic API Key (Opcional):</label>
                             <input
                               type="password"
@@ -1136,6 +1156,16 @@ export default function App() {
                               value={aiGatewayToken}
                               onChange={(e) => handleGatewayTokenChange(e.target.value)}
                               placeholder="Token de autorização do Gateway se ativo"
+                            />
+                          </div>
+                          <div className="input-group">
+                            <label>Modelo Anthropic (Opcional):</label>
+                            <input
+                              type="text"
+                              className="custom-inst-input"
+                              value={aiGatewayModel}
+                              onChange={(e) => handleGatewayModelChange(e.target.value)}
+                              placeholder="claude-3-5-sonnet-20241022"
                             />
                           </div>
                           <div className="input-group">

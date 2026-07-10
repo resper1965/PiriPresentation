@@ -6,6 +6,7 @@ type Bindings = {
   };
   AI_GATEWAY_TOKEN?: string;
   AI_GATEWAY_URL?: string;
+  AI_GATEWAY_MODEL?: string;
   AUTH_TOKEN?: string;
   ANTHROPIC_API_KEY?: string;
 };
@@ -72,7 +73,7 @@ async function generateCompletion(
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: env.AI_GATEWAY_MODEL || 'claude-3-5-sonnet-20241022',
           system: systemMsg,
           messages: userMsgs,
           max_tokens: maxTokens
@@ -191,12 +192,14 @@ async function generateCompletion(
 function getActiveEnv(c: any): Bindings {
   const customGatewayUrl = c.req.header('x-ai-gateway-url');
   const customGatewayToken = c.req.header('x-ai-gateway-token');
+  const customGatewayModel = c.req.header('x-ai-gateway-model');
   const customAnthropicKey = c.req.header('x-anthropic-api-key');
 
   return {
     ...c.env,
     AI_GATEWAY_URL: customGatewayUrl || c.env.AI_GATEWAY_URL,
     AI_GATEWAY_TOKEN: customGatewayToken || c.env.AI_GATEWAY_TOKEN,
+    AI_GATEWAY_MODEL: customGatewayModel || c.env.AI_GATEWAY_MODEL,
     ANTHROPIC_API_KEY: customAnthropicKey || c.env.ANTHROPIC_API_KEY,
   };
 }
