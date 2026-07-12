@@ -40,8 +40,8 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [exportingPptx, setExportingPptx] = useState(false);
   const [showBranding, setShowBranding] = useState(false);
-  const [aiGatewayUrl, setAiGatewayUrl] = useState(() => localStorage.getItem('piripres_ai_gateway_url') || '');
-  const [aiGatewayToken, setAiGatewayToken] = useState(() => localStorage.getItem('piripres_ai_gateway_token') || '');
+  const [aiGatewayUrl, setAiGatewayUrl] = useState(() => localStorage.getItem('piripres_ai_gateway_url') || 'https://gateway.ai.cloudflare.com/v1/0a6c490dd5fe9051422c15c9e133138e/piri-route');
+  const [aiGatewayToken, setAiGatewayToken] = useState(() => localStorage.getItem('piripres_ai_gateway_token') || '88c42916-bd9c-4a66-a331-c4a8d91dcb7e');
   const [aiGatewayModel, setAiGatewayModel] = useState(() => localStorage.getItem('piripres_ai_gateway_model') || 'claude-3-5-sonnet-20241022');
   const [anthropicApiKey, setAnthropicApiKey] = useState(() => localStorage.getItem('piripres_anthropic_api_key') || '');
   const [showAiConfig, setShowAiConfig] = useState(false);

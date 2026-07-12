@@ -197,9 +197,9 @@ function getActiveEnv(c: any): Bindings {
 
   return {
     ...c.env,
-    AI_GATEWAY_URL: customGatewayUrl || c.env.AI_GATEWAY_URL,
-    AI_GATEWAY_TOKEN: customGatewayToken || c.env.AI_GATEWAY_TOKEN,
-    AI_GATEWAY_MODEL: customGatewayModel || c.env.AI_GATEWAY_MODEL,
+    AI_GATEWAY_URL: customGatewayUrl || c.env.AI_GATEWAY_URL || 'https://gateway.ai.cloudflare.com/v1/0a6c490dd5fe9051422c15c9e133138e/piri-route',
+    AI_GATEWAY_TOKEN: customGatewayToken || c.env.AI_GATEWAY_TOKEN || '88c42916-bd9c-4a66-a331-c4a8d91dcb7e',
+    AI_GATEWAY_MODEL: customGatewayModel || c.env.AI_GATEWAY_MODEL || 'claude-3-5-sonnet-20241022',
     ANTHROPIC_API_KEY: customAnthropicKey || c.env.ANTHROPIC_API_KEY,
   };
 }
